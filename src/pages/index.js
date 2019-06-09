@@ -16,6 +16,8 @@ class BlogIndex extends React.Component {
       <Layout location={this.props.location} title={siteTitle}>
         <SEO title="All posts" />
         {posts.map(({ node }) => {
+          if (node.fields.slug === `/dummy/`) { return null }
+
           const title = node.frontmatter.title || node.fields.slug
           const tags = node.frontmatter.tags ? node.frontmatter.tags + " |" : ""
           return (
