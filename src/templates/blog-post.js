@@ -12,6 +12,7 @@ class BlogPostTemplate extends React.Component {
     const post = this.props.data.markdownRemark
     const siteTitle = this.props.data.site.siteMetadata.title
     const siteUrl = this.props.data.site.siteMetadata.siteUrl
+    const postId = post.frontmatter.id || post.id
     const { previous, next } = this.props.pageContext
     const tags = post.frontmatter.tags ? post.frontmatter.tags + " |" : ""
 
@@ -41,7 +42,11 @@ class BlogPostTemplate extends React.Component {
           }}
         />
         <Bio />
-        <ul
+        <Disqus 
+          identifier={postId}
+          title={post.frontmatter.title}
+          url={`${siteUrl}${post.fields.slug}`}
+        />
         <section
           style={{
             display: `flex`,
