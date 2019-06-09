@@ -3,13 +3,19 @@ module.exports = {
     title: `Ilya Puchka`,
     author: `Ilya Puchka`,
     description: `Ilya Puchka Blog`,
-    siteUrl: `https://ilyapuchka.github.io/`,
+    siteUrl: `https://ilya.puchka.me`,
     social: {
       twitter: `ilyapuchka`,
       github: `ilyapuchka`
     },
   },
   plugins: [
+    {
+      resolve: `gatsby-plugin-disqus`,
+      options: {
+        shortname: `ilyapuchkameen`
+      }
+    },
     {
       resolve: `gatsby-source-filesystem`,
       options: {
@@ -27,7 +33,6 @@ module.exports = {
     {
       resolve: `gatsby-transformer-remark`,
       options: {
-        "excerpt_separator": `<!-- description -->`,
         plugins: [
           {
             resolve: `gatsby-remark-images`,

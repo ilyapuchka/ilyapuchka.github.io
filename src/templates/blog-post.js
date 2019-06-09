@@ -4,12 +4,14 @@ import { Link, graphql } from "gatsby"
 import Bio from "../components/bio"
 import Layout from "../components/layout"
 import SEO from "../components/seo"
+import Disqus from "gatsby-plugin-disqus"
 import { rhythm, scale } from "../utils/typography"
 
 class BlogPostTemplate extends React.Component {
   render() {
     const post = this.props.data.markdownRemark
     const siteTitle = this.props.data.site.siteMetadata.title
+    const siteUrl = this.props.data.site.siteMetadata.siteUrl
     const { previous, next } = this.props.pageContext
     const tags = post.frontmatter.tags ? post.frontmatter.tags + " |" : ""
 
@@ -40,29 +42,47 @@ class BlogPostTemplate extends React.Component {
         />
         <Bio />
         <ul
+        <section
           style={{
             display: `flex`,
             flexWrap: `wrap`,
+            flexDirection: `row`,
             justifyContent: `space-between`,
             listStyle: `none`,
             padding: 0,
           }}
         >
-          <li>
-            {previous && (
-              <Link to={previous.fields.slug} rel="prev">
-                ← {previous.frontmatter.title}
-              </Link>
+          <section style={{maxWidth: `50%`, padding: 10}}>
+          {previous && (
+              <div>
+                Previous:<br/>
+                <Link style={{ boxShadow: `none`, color:'#000' }} to={previous.fields.slug} rel="prev">
+                  <strong>{previous.frontmatter.title}</strong>
+                </Link>
+                <p
+                  dangerouslySetInnerHTML={{
+                    __html: previous.excerpt,
+                  }}
+                />
+              </div>
             )}
-          </li>
-          <li>
+          </section>
+          <section style={{maxWidth: `50%`, padding: 10}}>
             {next && (
-              <Link to={next.fields.slug} rel="next">
-                {next.frontmatter.title} →
-              </Link>
-            )}
-          </li>
-        </ul>
+              <div>
+                Next:<br/>
+                <Link style={{ boxShadow: `none`, color:'#000' }} to={next.fields.slug} rel="next">
+                  <strong>{next.frontmatter.title}</strong>
+                </Link>
+                <p
+                  dangerouslySetInnerHTML={{
+                    __html: next.excerpt,
+                  }}
+                />
+              </div>
+          )}
+          </section>
+        </section>
       </Layout>
     )
   }
@@ -76,13 +96,18 @@ export const pageQuery = graphql`
       siteMetadata {
         title
         author
+        siteUrl
       }
     }
     markdownRemark(fields: { slug: { eq: $slug } }) {
       id
       excerpt(pruneLength: 160)
       html
+      fields {
+        slug
+      }
       frontmatter {
+        id
         title
         date(formatString: "MMMM DD, YYYY")
         description

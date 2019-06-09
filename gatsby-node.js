@@ -14,11 +14,13 @@ exports.createPages = ({ graphql, actions }) => {
         ) {
           edges {
             node {
+              excerpt(pruneLength: 160)
               fields {
                 slug
               }
               frontmatter {
                 title
+                description
               }
             }
           }
