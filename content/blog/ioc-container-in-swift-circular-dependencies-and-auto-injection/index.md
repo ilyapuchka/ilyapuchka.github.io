@@ -8,9 +8,9 @@ tags: ""
 
 > Note (15.04.16): This post is updated to reflect some of the latest changes in Dip.
 
-<!-- description -->
-
 In my [previous post](http://ilya.puchka.me/ioc-container-in-swift/) I wrote about [Dip](https://github.com/AliSoftware/Dip), lightweight IoC written in Swift. Here I would like to describe how some other of it's features were implemented. They are not yet available in original repo, but you can check them out in my [fork](https://github.com/ilyapuchka/Dip/tree/feature/auto-injection).
+
+<!-- description -->
 
 ### Circular dependencies
 

@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f66
 title: Path to Carthage. Real-life experience.
 date: 2015-09-21T12:22:57.000Z
-description: ""
+description: " "
 tags: ""
 ---
 
 When it comes to dependency management in Cocoa world you have three options:
-
-<!-- description -->
 
 - Cocoapods
 - Carthage

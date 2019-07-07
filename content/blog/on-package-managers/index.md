@@ -2,13 +2,9 @@
 id: 5b6f5a3a9d28c70f0f015f71
 title: On package managers
 date: 2016-03-29T19:16:28.000Z
-description: ""
+description: "My 5 cents on package managers."
 tags: ""
 ---
-
-My 5 cents on package managers.
-
-<!-- description -->
 
 I definitely agree with those who say that you should not depend on code from external source (meaning where and how it is hosted). You should check in **any** code or binaries, used by your project to your own repo. But in fact it is not enough.
 
