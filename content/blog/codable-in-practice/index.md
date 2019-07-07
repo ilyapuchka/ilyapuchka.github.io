@@ -3,7 +3,7 @@ id: 5b6f5a3a9d28c70f0f015f88
 title: Codable in practice
 date: 2018-05-05T23:38:46.000Z
 description: ""
-tags: ""
+tags: Swift
 ---
 
 One of the first tasks I got in my new team was to convert entire code base from in-house JSON encoding/decoding solution (in fact two of them) to Swift native Codable protocols. What may sound like an easy task, on practice means a lot of work taking into account inconsistencies in API. That lead to the situation when apart from really simple data structures holding just few properties of primitive types, everything required custom decoding or encoding. Here are few of the use cases that I encountered and their possible solutions. In the end I will talk a bit about my experience using Sourcery to solve these issues.
@@ -32,28 +32,32 @@ The best way to make it still work is to introduce intermediate wrapper types wh
 
 It might be the case that some of the data will come in a format that you don't expect and can not decode, i.e. date format changed without API version change, or you are dealing with user generated data that was not validated. In case this data is a part of a bigger data graph you probably don't want to fail decoding of the whole graph just because something went wrong with one of its portions, but instead disable some corresponding feature of the app. This may be controlled by the API not returning such data so you will not need to decode corresponding keys (but most likely API will not care about validating data for a client). In this case you can just make your property optional or use `decodeIfPresent` if you have to do decoding manually. The problem with this is that if at some point you will receive malformed data, decoding will still fail, because as you can see from `Decodable` constructor signature `init(from:) throws` it is not failable and only can throw errors, which will be then re-thrown by `decodeIfPresent`. So if key is present, decoder will still attempt to decode what ever data is stored by this key. Instead of optionals and `decodeIfPresent` we have to use either custom decoding methods which will silence errors:
 
-    extension KeyedDecodingContainer {
-        public func decodeSafely<T: Decodable>(_ type: T.Type, forKey key: KeyedDecodingContainer.Key) -> T? {
-            guard let decoded = try? decode(T.self, forKey: key) else { return nil }
-            return decoded
-        }
-    
-        public func decodeSafelyIfPresent<T: Decodable>(_ type: T.Type, forKey key: KeyedDecodingContainer.Key) -> T? {
-            guard let decoded = try? decodeIfPresent(T.self, forKey: key) else { return nil }
-            return decoded
-        }
+```swift
+extension KeyedDecodingContainer {
+    public func decodeSafely<T: Decodable>(_ type: T.Type, forKey key: KeyedDecodingContainer.Key) -> T? {
+        guard let decoded = try? decode(T.self, forKey: key) else { return nil }
+        return decoded
     }
+
+    public func decodeSafelyIfPresent<T: Decodable>(_ type: T.Type, forKey key: KeyedDecodingContainer.Key) -> T? {
+        guard let decoded = try? decodeIfPresent(T.self, forKey: key) else { return nil }
+        return decoded
+    }
+}
+```
 
 or introduce a wrapper type that will do the same in its implementation of `Decodable` constructor:
 
-    struct FailableDecodable<T: Swift.Decodable>: Swift.Decodable {
-            let value: T?
-    
-            init(from decoder: Swift.Decoder) throws {
-                let container = try decoder.singleValueContainer()
-                self.value = try? container.decode(T.self)
-            }
+```swift
+struct FailableDecodable<T: Swift.Decodable>: Swift.Decodable {
+    let value: T?
+
+    init(from decoder: Swift.Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self.value = try? container.decode(T.self)
     }
+}
+```
 
 The benefit of using wrapper type is that it can be then used as a property type by itself to allow decoding code to be synthesised by compiler and can be used as a type of collection elements, like arrays, as discussed further.
 
@@ -61,27 +65,31 @@ The benefit of using wrapper type is that it can be then used as a property type
 
 Malformed data discussed previously can come in as an array. In this case you might want to just filter out those items which can not be decoded and keep the rest. Again standard decoding methods will not work here as decoding `[T].self` type will fail if any of items can not be decoded to `T`, as well as `[T?].self` - even though `Optional` is `Decodable` its implementation rethrows the error if its value can't be decoded. In this case you can again use `FailableDecodable` wrapper or extend decoder with custom decoding methods:
 
-    items = try values.decode([FailableDecodable<Item>].self, forKey: .items).flatMap({ $0.value })
-    
-    items = try values.decodeIfPresent([FailableDecodable<Item>].self, forKey: .items).flatMap({ $0.value })
+```swift
+items = try values.decode([FailableDecodable<Item>].self, forKey: .items).flatMap({ $0.value })
+
+items = try values.decodeIfPresent([FailableDecodable<Item>].self, forKey: .items).flatMap({ $0.value })
+```
 
 #### Not empty arrays and strings
 
 In constrast to pruning arrays you might want to ensure that array contains at least one item, or string to be not empty. This type of validation could be performed on a backend side but usually it's not the case. So you will have to deal with it on a client. Another wrapper that ensures that wrapped collection (including `String`) is not empty can be useful in this case (you can implement more [sophisticated](https://github.com/khanlou/NonEmptyArray) version of it). Again you can use this wrapper directly or introduce custom decoding methods (you might then need them on both `KeyedDecodingContainer` and `UnkeyedDecodingContainer`).
 
-    struct NotEmptyDecodable<T: Swift.Decodable & Collection>: Swift.Decodable {
-        var value: T
-    
-        init(from decoder: Decoder) throws {
-            let values = try decoder.singleValueContainer()
-            let value = try values.decode(T.self)
-            guard !value.isEmpty else {
-                throw decoder.dataCorrupted("Unexpected empty \(T.self)")
-            }
-            self.value = value
+```swift
+struct NotEmptyDecodable<T: Swift.Decodable & Collection>: Swift.Decodable {
+    var value: T
+
+    init(from decoder: Decoder) throws {
+        let values = try decoder.singleValueContainer()
+        let value = try values.decode(T.self)
+        guard !value.isEmpty else {
+            throw decoder.dataCorrupted("Unexpected empty \(T.self)")
         }
-    
+        self.value = value
     }
+
+}
+```
 
 #### Deep nesting
 
@@ -89,102 +97,113 @@ It is not unusual to have data that you are interested in buried deep inside dat
 
 First we will need a custom key type:
 
-    public struct AnyCodingKey: Swift.CodingKey, ExpressibleByStringLiteral, ExpressibleByIntegerLiteral {
-        public var intValue: Int?
-        public var stringValue: String
-    
-        public init?(intValue: Int) {
-            self.intValue = intValue
-            self.stringValue = "\(intValue)"
-        }
-    
-        public init?(stringValue: String) {
-            self.stringValue = stringValue
-            self.intValue = Int(stringValue)
-        }
-    
-        public init(stringLiteral value: String) {
-            self.init(stringValue: value)!
-        }
-    
-        public init(integerLiteral value: Int) {
-            self.init(intValue: value)!
-        }
-    
+```swift
+public struct AnyCodingKey: Swift.CodingKey, ExpressibleByStringLiteral, ExpressibleByIntegerLiteral {
+    public var intValue: Int?
+    public var stringValue: String
+
+    public init?(intValue: Int) {
+        self.intValue = intValue
+        self.stringValue = "\(intValue)"
     }
+
+    public init?(stringValue: String) {
+        self.stringValue = stringValue
+        self.intValue = Int(stringValue)
+    }
+
+    public init(stringLiteral value: String) {
+        self.init(stringValue: value)!
+    }
+
+    public init(integerLiteral value: Int) {
+        self.init(intValue: value)!
+    }
+
+}
+```
 
 This key can be constructed with any string to access property by key or integer to access item in array by index (most of the time you will probably need just first or last item, so recognising `first` and `last` in the key path can be handy too). Next we need a method that will take care of decoding by key path:
 
-    struct NestedKeyDecodable<T: Swift.Decodable>: Swift.Decodable {
-        let value: T
-     
-        init(from decoder: Swift.Decoder) throws {
-            guard let nestedKey = decoder.userInfo[AnyCodingKey.key] as? AnyCodingKey,
-                  !nestedKey.stringValue.isEmpty else {
-                fatalError("No key is stored in decoder's user info")
-            }
-            let keydContainer = try? decoder.container(keyedBy: AnyCodingKey.self)
-            let unkeyedContainer = try? decoder.unkeyedContainer()
-            self.value = try _decodeNested(key: nestedKey,              
-                                keyedContainer: keydContainer,
-                              unkeyedContainer: unkeyedContainer)
+```swift
+struct NestedKeyDecodable<T: Swift.Decodable>: Swift.Decodable {
+    let value: T
+    
+    init(from decoder: Swift.Decoder) throws {
+        guard let nestedKey = decoder.userInfo[AnyCodingKey.key] as? AnyCodingKey,
+                !nestedKey.stringValue.isEmpty else {
+            fatalError("No key is stored in decoder's user info")
         }
+        let keydContainer = try? decoder.container(keyedBy: AnyCodingKey.self)
+        let unkeyedContainer = try? decoder.unkeyedContainer()
+        self.value = try _decodeNested(
+            key: nestedKey,              
+            keyedContainer: keydContainer,
+            unkeyedContainer: unkeyedContainer
+        )
     }
+}
+```
 
 The main bit of implementation is `_decodeNested` function. What it does is it breaks key path into keys using `.` as a separator and loops through key path items trying to get either nested keyed container for string items (accessing nested object) or nested unkeyed container for integer items (accessing array element). On the last key path item it tries to decode value from the latest nested container it had reached.
 
-    func _decodeNested<T: Swift.Decodable>(key: AnyCodingKey,
-                                                   keyedContainer: KeyedDecodingContainer<AnyCodingKey>?,
-                                                   unkeyedContainer: UnkeyedDecodingContainer?) throws -> T
-    {
-        var keyPath = key.stringValue.components(separatedBy: ".")
-        var key = AnyCodingKey(stringValue: keyPath.removeFirst())!
-        var keyedContainer = keyedContainer
-        var unkeyedContainer = unkeyedContainer
-    
-        if let index = key.intValue {
-            try unkeyedContainer?.advance(to: index)
-        }
-    
-        while !keyPath.isEmpty {
-            let nextKey = AnyCodingKey(stringValue: keyPath.removeFirst())!
-            if let index = nextKey.intValue {
-                unkeyedContainer = try keyedContainer?.nestedUnkeyedContainer(forKey: key, at: index)
-                    ?? unkeyedContainer?.nestedUnkeyedContainer(at: index)
-                keyedContainer = nil
-            } else {
-                keyedContainer = try keyedContainer?.nestedContainer(keyedBy: AnyCodingKey.self, forKey: key)
-                    ?? unkeyedContainer?.nestedContainer(keyedBy: AnyCodingKey.self)
-                unkeyedContainer = nil
-            }
-            key = nextKey
-        }
-    
-        if let c = keyedContainer {
-            return try c.decode(T.self, forKey: key)
-        } else if var c = unkeyedContainer {
-            return try c.decode(T.self)
-        } else {
-            fatalError("Should never happen")
-        }
+```swift
+func _decodeNested<T: Swift.Decodable>(
+    key: AnyCodingKey,
+    keyedContainer: KeyedDecodingContainer<AnyCodingKey>?,
+    unkeyedContainer: UnkeyedDecodingContainer?
+) throws -> T {
+    var keyPath = key.stringValue.components(separatedBy: ".")
+    var key = AnyCodingKey(stringValue: keyPath.removeFirst())!
+    var keyedContainer = keyedContainer
+    var unkeyedContainer = unkeyedContainer
+
+    if let index = key.intValue {
+        try unkeyedContainer?.advance(to: index)
     }
+
+    while !keyPath.isEmpty {
+        let nextKey = AnyCodingKey(stringValue: keyPath.removeFirst())!
+        if let index = nextKey.intValue {
+            unkeyedContainer = try keyedContainer?.nestedUnkeyedContainer(forKey: key, at: index)
+                ?? unkeyedContainer?.nestedUnkeyedContainer(at: index)
+            keyedContainer = nil
+        } else {
+            keyedContainer = try keyedContainer?.nestedContainer(keyedBy: AnyCodingKey.self, forKey: key)
+                ?? unkeyedContainer?.nestedContainer(keyedBy: AnyCodingKey.self)
+            unkeyedContainer = nil
+        }
+        key = nextKey
+    }
+
+    if let c = keyedContainer {
+        return try c.decode(T.self, forKey: key)
+    } else if var c = unkeyedContainer {
+        return try c.decode(T.self)
+    } else {
+        fatalError("Should never happen")
+    }
+}
+```
 
 #### Flat data structure
 
 Opposite to the nested data is situation when you have different data types encoded in the same JSON object. For example it can be a patient data with their address encoded on the same level as its name and other personal details instead of being a separate object stored by its own key. In your data model you can prefer to represent it as a single property of `Address` type, especially if another endpoint returns you this type on its own and you want to reuse it. To do that call `Decodable` constructor of this type and pass it the same decoder used to decode the containing type. The same applies to encoding.
 
-    struct Person: Decodable {
-        let name: String
-        let address: Address
-    
-        enum CodingKeys: String, CodingKey { ... }
-    
-        init(from decoder: Decoder) throws {
-            let container = try decoder.container(keyedBy: CodingKeys.self)
-            name = try container.decode(String.self, forKey: .name)
-            address = try Address(from: decoder)
-        }
+```swift
+struct Person: Decodable {
+    let name: String
+    let address: Address
+
+    enum CodingKeys: String, CodingKey { ... }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        address = try Address(from: decoder)
     }
+}
+```
 
 #### Mapping from one type to another
 
@@ -193,21 +212,22 @@ It's very usual when you need to convert `String`s to `Double`, or `String` to s
 #### Different date formats
 
 In ideal world API is consistent in representing dates as well as other types. In this ideal world it either uses ISO format or timestamps, so that you can use one of the decoding strategies provided by standard library, or at least uses some consistent format, so that you can define your own strategy based on `DateFormatter`. But in real world you can have an endpoint that, lets say, returns appointment details with the date and time of appointment and patient personal data with its birthday which only have date and does not have time. One decoding strategy will not be able to handle this. You may come up with a smart custom strategy that takes in `Decoder` and returns `Date` depending on the key being decoded (`Decoder` does not keep track of the type being decoded, it only tracks keys), but it does not sound like a good solution to me. One alternative is to decode each date property as a string value first and then use what ever date formatter you need in each particular case. Another is to introducing generic type that will be parametrised over formatter type:
+    
+```swift
+struct FormattedDate<F: DateFormatter>: Decodable {
+    let date: Date
 
-    
-    struct FormattedDate<F: DateFormatter>: Decodable {
-        let date: Date
-    
-        init(from decoder: Decoder) throws {
-            let values = try decoder.singleValueContainer()
-            let dateString = try values.decode(String.self)
-            let dateFormatter = F.sharedInstance // 🤷‍♂️
-            guard let date = dateFormatter.date(from: dateString) else {
-                throw DecodingError.dataCorrupted("Invalid date format")
-            }
-            self.date = date
+    init(from decoder: Decoder) throws {
+        let values = try decoder.singleValueContainer()
+        let dateString = try values.decode(String.self)
+        let dateFormatter = F.sharedInstance // 🤷‍♂️
+        guard let date = dateFormatter.date(from: dateString) else {
+            throw DecodingError.dataCorrupted("Invalid date format")
         }
+        self.date = date
     }
+}
+```
 
 This though will require to define date formatters as subclasses of `DateFormatter` (you can model it in another way but you will still need them to be distinct types), while it's more common to define them as plane `DataFormatter`s created with different date formats and stored as a static instances in some namespace.
 
@@ -231,17 +251,11 @@ These issues are most of which I had to tackle, but there are also other interes
 
 If we look at the outlined solutions they all more or less fall into three domains:
 
-- 
+- implementing decoding/encoding manually and dealing with issues one by one
 
-implementing decoding/encoding manually and dealing with issues one by one
+- extending decoding/encoding containers with custom methods
 
-- 
-
-extending decoding/encoding containers with custom methods
-
-- 
-
-define wrapper types and use type system to make Codable implementation synthesised by compiler
+- define wrapper types and use type system to make Codable implementation synthesised by compiler
 
 The first option is the most straight forward but can require you to write or copy-paste a lot of code.  
 The second option will still require manual implementation of decoding/encoding protocols but will give you reusable methods which will save you some time.  
@@ -251,43 +265,25 @@ With the third option instead of reusable methods you will have types and will b
 
 But there is also another option - let Sourcery to [generate boilerplate `Codable` code](https://cdn.rawgit.com/krzysztofzablocki/Sourcery/master/docs/codable.html) instead of compiler. There are few benefits of using Sourcery here comparing with other options:
 
-- 
+- it is much more flexible than what standard library has to offer right now, you can implement absolutely custom template which will handle your specific cases in the way which suits best to you
 
-it is much more flexible than what standard library has to offer right now, you can implement absolutely custom template which will handle your specific cases in the way which suits best to you
+- it saves you from writing much more boilerplate code than standard library can do right now. It can let you to define only custom coding keys and generate the rest of the keys for you, and it can let you to define custom decoding methods only for some properties and generate code for the rest of the properties
 
-- 
+- you don't need to pollute your code with various wrapper types which only purpose is to satisfy compiler
 
-it saves you from writing much more boilerplate code than standard library can do right now. It can let you to define only custom coding keys and generate the rest of the keys for you, and it can let you to define custom decoding methods only for some properties and generate code for the rest of the properties
+- Sourcery will update generated code whenever you change your source code so you will never forget to decode or encode new property
 
-- 
-
-you don't need to pollute your code with various wrapper types which only purpose is to satisfy compiler
-
-- 
-
-Sourcery will update generated code whenever you change your source code so you will never forget to decode or encode new property
-
-- 
-
-you can remove Sourcery at any point and you will have all the code in place already
+- you can remove Sourcery at any point and you will have all the code in place already
 
 There are drawbacks of course too:
 
-- 
+- learning curve as you need to understand Sourcery specifics and its limitations
 
-learning curve as you need to understand Sourcery specifics and its limitations
+- you may need to develop and maintain your own template or extend existing one, so you'll need to be comfortable with options that Sourcery provides for developing templates (Stencil, Swift or EJS)
 
-- 
+- if you are working in the team you need to make sure that you are not the only one who understand what Sourcery is. Otherwise you will end up with it being removed as soon as you leave the team (the story of my life) or it will be harder to adopt it
 
-you may need to develop and maintain your own template or extend existing one, so you'll need to be comfortable with options that Sourcery provides for developing templates (Stencil, Swift or EJS)
-
-- 
-
-if you are working in the team you need to make sure that you are not the only one who understand what Sourcery is. Otherwise you will end up with it being removed as soon as you leave the team (the story of my life) or it will be harder to adopt it
-
-- 
-
-template code is still a code and it can have bugs and can (will) become a legacy. Also do not overuse annotations - they make templates more flexible, but, in my experience, are hard to understand for newcomers
+- template code is still a code and it can have bugs and can (will) become a legacy. Also do not overuse annotations - they make templates more flexible, but, in my experience, are hard to understand for newcomers
 
 #### Conclusion
 

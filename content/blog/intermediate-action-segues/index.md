@@ -33,36 +33,40 @@ Here are our design goals:
 
 Actually implementation of such segue is straight forward. All we need to do is to ask some delegate, custom object (that can be your lovely router, coordinator or what ever else) or simply segue's `sourceViewController`, to provide us with intermediate view controller, that we need to present instead of `destinationViewController`, and with its presentation style. For that we will use a protocol:
 
-    public protocol IntermediateActionPresentationDelegate: class {
-        
-        func intermediateViewControllerForSegue(segue: UIStoryboardSegue) -> UIViewController?
-        
-        func intermediateViewControllerPresentationStyleForSegue(segue: UIStoryboardSegue) -> IntermediateActionSeguePresentationStyle
-        
-        func willPresentIntermediateViewController(segue: UIStoryboardSegue, intermediateViewController: UIViewController)
+```swift
+public protocol IntermediateActionPresentationDelegate: class {
     
-        func intermediateViewControllerCompleted(intermediateViewController: UIViewController, success: Bool, completionData: AnyObject?) -> Bool
+    func intermediateViewControllerForSegue(segue: UIStoryboardSegue) -> UIViewController?
     
-    }
+    func intermediateViewControllerPresentationStyleForSegue(segue: UIStoryboardSegue) -> IntermediateActionSeguePresentationStyle
+    
+    func willPresentIntermediateViewController(segue: UIStoryboardSegue, intermediateViewController: UIViewController)
+
+    func intermediateViewControllerCompleted(intermediateViewController: UIViewController, success: Bool, completionData: AnyObject?) -> Bool
+
+}
+```
 
 When that intermediate view controller completes its task we let the segue that presented it to know about that and depending on the result, success or failure, segue will complete itself dismissing intermediate view controllers and presenting `destinationViewController` or abort. For that we need to keep a reference to segue in a view controller. We can use associated object to add this property to any view controller in extension:
 
-    extension UIViewController {
-    
-        private struct AssociatedKeys {
-            static var segueKey = 0
-        }
-        
-        public private(set) final var intermediateActionSegue: IntermediateActionSegue? {
-            get {
-                return objc_getAssociatedObject(self, &AssociatedKeys.segueKey) as? IntermediateActionSegue ?? storyboard?.intermediateActionSegue
-            }
-            set {
-                objc_setAssociatedObject(self, &AssociatedKeys.segueKey, newValue, objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-            }
-        }
-    
+```swift
+extension UIViewController {
+
+    private struct AssociatedKeys {
+        static var segueKey = 0
     }
+    
+    public private(set) final var intermediateActionSegue: IntermediateActionSegue? {
+        get {
+            return objc_getAssociatedObject(self, &AssociatedKeys.segueKey) as? IntermediateActionSegue ?? storyboard?.intermediateActionSegue
+        }
+        set {
+            objc_setAssociatedObject(self, &AssociatedKeys.segueKey, newValue, objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+    }
+
+}
+```
 
 Note that if we want to present intermediate storyboards we kind of loose control of the flow while we are on that storyboard. For instance we can not pass reference to segue that caused this storyboard to appear between view controllers of that storyboard. Technically we can but it will break our first design goal. So we additionally store reference to segue in storyboard when we present "initial" intermediate view controller again using associated object and extension.
 

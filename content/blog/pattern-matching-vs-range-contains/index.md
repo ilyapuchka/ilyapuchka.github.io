@@ -10,21 +10,23 @@ Today I was working on simple validators that we use for forms (backed by awesom
 
 <!-- description -->
 
-    struct StringValidator: Validator {
-         typealias ValueType = String
-         
-         let stringRange: Range<Int>
-         init(stringRange: Range<Int> = 1..<Int.max) {
-             self.stringRange = stringRange
-         }
-         
-         func validate(value: String?) -> Bool {
-             guard let value = value?.stringByTrimmingCharactersInSet(.whitespaceAndNewlineCharacterSet()) else {
-                 return true
-             }
-             return stringRange.contains(value.characters.count)
-         }
-     }
+```swift
+struct StringValidator: Validator {
+    typealias ValueType = String
+    
+    let stringRange: Range<Int>
+    init(stringRange: Range<Int> = 1..<Int.max) {
+        self.stringRange = stringRange
+    }
+    
+    func validate(value: String?) -> Bool {
+        guard let value = value?.stringByTrimmingCharactersInSet(.whitespaceAndNewlineCharacterSet()) else {
+            return true
+        }
+        return stringRange.contains(value.characters.count)
+    }
+}
+```
 
 The idea is simple. Form field can have a validator with default range (`1..<Int.max`) that will validate any not empty string, but it can also setup validator with specific range that will define minimum and maximum string length. Using `isEmpty` on string is not an option because it makes a special case and for that I will need to define a separate validator like `NonEmptyStringValidator` what looks unnecessary.
 
@@ -32,13 +34,17 @@ Then I wrote some tests. And noticed that when I pass an empty string as a value
 
 I definitely didn't want to compare range `startIndex` and `endIndex` manually. So my first attempt to fix this was moving to `NSRange`:
 
-    return NSLocationInRange(value.characters.count, NSRange(stringRange))
+```swift
+return NSLocationInRange(value.characters.count, NSRange(stringRange))
+```
 
 It works and only checks for range bounds. But that does not look nice either.
 
 After some time I found much better solution (I think it dawned on me at the moment when I switched to Safari tab with ["Match me if you can"](https://appventure.me/2015/08/20/swift-pattern-matching-in-detail/) article):
 
-    return stringRange ~= value.characters.count
+```swift
+return stringRange ~= value.characters.count
+```
 
 Works perfectly and looks much better than any other solution. Though I had to put a comment describing what it does because `~=` is so rarely used by itself.
 

@@ -14,27 +14,29 @@ First - a bit of a context. In my current project we extensively use [Eureka](ht
 
 Any `Section` that implements `SelectableSectionType` handles rows selection that can be setup with multiple or single selection option. In case of a single selection implementation goes through all the rows of this section and clears the value of the row that was selected previously, which removes selection indicator from its cell, and sets the value of the row for the new selection (selected row is determined by non-nil value). For that it is using combination of `filter` and `forEach` methods:
 
-    extension SelectableSectionType where Self: Section {
-    
-        func prepare(selectableRows rows: [BaseRow]) {
-            for row in rows {
-                ...
-                row.onCellSelection { [weak self] cell, row in
-                    guard let s = self, !row.isDisabled else { return }
-                    switch s.selectionType {
-                    case .multipleSelection: ...
-                    case let .singleSelection(enableDeselection):
-                        // clear baseValue for all rows except selected
-                        s.filter { $0.baseValue != nil && $0 != row }.forEach {
-                            $0.baseValue = nil
-                            $0.updateCell()
-                        }
-                        // update value of selected row
+```swift
+extension SelectableSectionType where Self: Section {
+
+    func prepare(selectableRows rows: [BaseRow]) {
+        for row in rows {
+            ...
+            row.onCellSelection { [weak self] cell, row in
+                guard let s = self, !row.isDisabled else { return }
+                switch s.selectionType {
+                case .multipleSelection: ...
+                case let .singleSelection(enableDeselection):
+                    // clear baseValue for all rows except selected
+                    s.filter { $0.baseValue != nil && $0 != row }.forEach {
+                        $0.baseValue = nil
+                        $0.updateCell()
                     }
+                    // update value of selected row
                 }
             }
         }
     }
+}
+```
 
 This code works fine with Swift 3, but with Swift 4 selection started to behave "weird": as soon as you select new option it was not possible to select previous option any more.
 
@@ -44,60 +46,68 @@ And indeed adding `deinit` method to `Section` and adding a breakpoint there cle
 
 [My first guess](https://twitter.com/ilyapuchka/status/910155957480624128) was to blame some bug related to ARC, but it turned out to be related to [SE-0174](https://github.com/apple/swift-evolution/blob/master/proposals/0174-filter-range-replaceable.md). According to this proposal a new version of `filter` method was added to `RangeReplaceableCollection` which is returning `Self` instead of `[Self.Element]` as defined in Swift 3. This method has a default implementation:
 
-    extension RangeReplaceableCollection {
-    
-        public func filter(
-            _ isIncluded: (Element) throws -> Bool
-        ) rethrows -> Self {
-            return try Self(self.lazy.filter(isIncluded))
-        }
-    
+```swift
+extension RangeReplaceableCollection {
+
+    public func filter(
+        _ isIncluded: (Element) throws -> Bool
+    ) rethrows -> Self {
+        return try Self(self.lazy.filter(isIncluded))
     }
-    
-    extension RangeReplaceableCollection {
-    
-        public init<S : Sequence>(_ elements: S)
-            where S.Element == Element {
-            self.init()
-            append(contentsOf: elements)
-        }
-    
+
+}
+
+extension RangeReplaceableCollection {
+
+    public init<S : Sequence>(_ elements: S)
+        where S.Element == Element {
+        self.init()
+        append(contentsOf: elements)
     }
+
+}
+```
 
 `RangeReplaceableCollection` already requires `init` initialiser on implementing type which made this implementation possible.
 
 And indeed `init` and `append` methods of `Section` were called in this case. As you can see it was resulting in updating `row.section` property. At the same time using KVO it was calling `prepare(selectableRows:)` when row was added to the section, which resulted in overriding `onCellSelection` for this row.
 
-    extension Section: RangeReplaceableCollection {
-        public func append<S: Sequence>(contentsOf newElements: S) where S.Iterator.Element == BaseRow {
-            kvoWrapper.rows.addObjects(from: newElements.map { $0 }) // triggers KVO invocation
-            ...
-            for row in newElements {
-                row.wasAddedTo(section: self)
-            }
+```swift
+extension Section: RangeReplaceableCollection {
+    public func append<S: Sequence>(contentsOf newElements: S) where S.Iterator.Element == BaseRow {
+        kvoWrapper.rows.addObjects(from: newElements.map { $0 }) // triggers KVO invocation
+        ...
+        for row in newElements {
+            row.wasAddedTo(section: self)
         }
     }
-    
-    extension BaseRow {
-        final func wasAddedTo(section: Section) {
-            self.section = section
-            ...
-        }
+}
+
+extension BaseRow {
+    final func wasAddedTo(section: Section) {
+        self.section = section
+        ...
     }
+}
+```
 
 And as the section reference in row is `weak` and a new section was just created by `filter` method, this instance was deallocated as soon as code was escaping the only context that has a strong reference to it, which is a subsequent `forEach` call.
 
 The fix for this issue is much simpler then debugging it. One of the option is to stop using `filter`:
 
-    s.forEach {
-        guard $0.baseValue != nil && $0 != row else { return }
-        $0.baseValue = nil
-        $0.updateCell()
-    }
+```swift
+s.forEach {
+    guard $0.baseValue != nil && $0 != row else { return }
+    $0.baseValue = nil
+    $0.updateCell()
+}
+```
 
 Another option is to explicitly specify return type of `filter` method so that Swift 3 variant is used:
 
-    s.filter { $0.baseValue != nil && $0 != row } as [BaseRow]
+```swift
+s.filter { $0.baseValue != nil && $0 != row } as [BaseRow]
+```
 
 Both of these options will result in array of rows being created instead of new `Section` which will not lead to all of its side effects, in this case unneeded. Luckily none of the rest of Eureka's code was affected as in other places where `filter` was used its return type was already explicitly set to array.
 

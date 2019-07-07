@@ -23,8 +23,8 @@ Contents:
 ###### Var in for-in loop
 
 If you have an array of reference type objects you can mutate them in a loop just by adding `var` before loop variable. This will work only for reference types as value types are copied on assignment and so the items in array will be not modified. If you have value types though you will be able to modify loop variable inside the loop. It will work pretty much like mutable function arguments.
-
     
+```swift
     // Value type
     var valuesArray = [1, 2, 3]
     for (var valueItem) in valuesArray {
@@ -45,11 +45,13 @@ If you have an array of reference type objects you can mutate them in a loop jus
         ++item.value // 2, 3, 4
     }
     objectsArray // 2, 3, 4
-    
-
+``` 
   
-######Property observers for local variables This does not work in plyagrounds but give it a try in a real project and you will see "Will set 1" and "Did set 1":
+######Property observers for local variables 
 
+This does not work in plyagrounds but give it a try in a real project and you will see "Will set 1" and "Did set 1":
+
+```swift
     func method() {
         
         var some: Int = 0 {
@@ -64,17 +66,22 @@ If you have an array of reference type objects you can mutate them in a loop jus
     }
     
     method()
-
+```
   
-###### `~=` operator This is an expression matching operator. This is what `switch` statement uses for pattern matching. Outside `switch` you can use it i.e to find out if Range contains value. 
+###### `~=` operator 
 
+This is an expression matching operator. This is what `switch` statement uses for pattern matching. Outside `switch` you can use it i.e to find out if Range contains value. 
+
+```swift
     let some = 1
     if 0...5 ~= some {
         print("\(some) is between 0 and 5")
     }
+```
 
 You can even override this operator like any other to crate some crazy things. For more information check out [docs](https://developer.apple.com/library/prerelease/ios/documentation/Swift/Conceptual/Swift_Programming_Language/Patterns.html#//apple_ref/doc/uid/TP40014097-CH36-XID_909).
 
+```swift
     typealias Age = UInt
     
     enum Gender {
@@ -127,9 +134,11 @@ You can even override this operator like any other to crate some crazy things. F
         print("Do what ever you want")
     default: break
     }
+```
 
 Unfortunatelly complier will not let you to match your class against tuple or enum, which would be cool. But you can still use ~= directly if you define it with tuple or enum as a pattern to match. To make it better swap right and left hand statements. This can be fun but I don't see very good usecases for that.
 
+```swift
     func ~=(pattern: Person, value: Gender) -> Bool {
         return pattern.gender == value
     }
@@ -141,10 +150,13 @@ Unfortunatelly complier will not let you to match your class against tuple or en
         print("Hi, gorgeous!")
     default: break
     }
-
+```
   
-######Curried functions Instance methods in Swift are actually curried functions. You can store it in variable and apply to different instances. Checkout [this post](http://oleb.net/blog/2014/07/swift-instance-methods-curried-functions/) by Ole Begemann for one of use cases for that feature.
+######Curried functions 
 
+Instance methods in Swift are actually curried functions. You can store it in variable and apply to different instances. Checkout [this post](http://oleb.net/blog/2014/07/swift-instance-methods-curried-functions/) by Ole Begemann for one of use cases for that feature.
+
+```swift
     extension Person {
         
         func growOlder(years: Age) {
@@ -156,10 +168,13 @@ Unfortunatelly complier will not let you to match your class against tuple or en
     let growOlder = Person.growOlder
     growOlder(Ilya)(5)
     growOlder(Marina)(5)
-
+```
   
-######Subscript with multiple parameters (by [AirspeedVelocity](https://twitter.com/AirspeedSwift/status/626701244455895044)) Did you know that you can provide more that one paramtere to subscript? Also ++ will not just change returned value but will also write it back to that subscript. It's possible because subscript parameters are `inout`.
+######Subscript with multiple parameters (by [AirspeedVelocity](https://twitter.com/AirspeedSwift/status/626701244455895044)) 
 
+Did you know that you can provide more than one parameter to subscript? Also ++ will not just change returned value but will also write it back to that subscript. It's possible because subscript parameters are `inout`.
+
+```swift
     extension Dictionary {
         subscript(key: Key, or or: Value) -> Value {
             get {
@@ -180,3 +195,4 @@ Unfortunatelly complier will not let you to match your class against tuple or en
     
     dict["c", or: 3]++ // 3
     dict // ["c": 4, "a": 2]
+```

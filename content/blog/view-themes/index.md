@@ -18,136 +18,148 @@ I could try solve that by adding type alias to `ColorTheme` to define type of ta
 
 In the app I have custom UITextField subclass. So I need to define theme for UITextField. I want to be able to use different kind's of themes and I want them to be value types (cause at the end it's just a data structure that contains color values). I need a protocol for that.
 
-    protocol TextFieldTheme {
-        var textColor: UIColor {get}
-        var placeholderColor: UIColor {get}
-        var tintColor: UIColor {get}
-        var leftViewTintColor: UIColor {get}
-        var rightViewTintColor: UIColor {get}
-        var backgroundColor: UIColor {get}
-    }
+```swift
+protocol TextFieldTheme {
+    var textColor: UIColor {get}
+    var placeholderColor: UIColor {get}
+    var tintColor: UIColor {get}
+    var leftViewTintColor: UIColor {get}
+    var rightViewTintColor: UIColor {get}
+    var backgroundColor: UIColor {get}
+}
+```
 
 Here I define protocol that defines methods to access color values specific for UITextField. For UIButton and other views there will be another set of functions.
 
 Now this protocol can be extended to provide default values for each of color. This way when I will define concrete theme I will not need to define properties for values that are not different from default.
 
-    extension TextFieldTheme {
-        var textColor: UIColor {
-            return UIColor.blackColor()
-        }
-        var placeholderColor: UIColor {
-            return UIColor.lightTextColor()
-        }
-        var tintColor: UIColor {
-            return UIColor(red: 0, green: 100.0/255.0, blue: 220.0/255.0, alpha: 1)
-        }
-        var leftViewTintColor: UIColor {
-            return UIColor(red: 0, green: 122.0/255.0, blue: 1, alpha: 1)
-        }
-        var rightViewTintColor: UIColor {
-            return UIColor(red: 0, green: 122.0/255.0, blue: 1, alpha: 1)
-        }
-        var backgroundColor: UIColor {
-            return UIColor.whiteColor()
-        }
+```swift
+extension TextFieldTheme {
+    var textColor: UIColor {
+        return UIColor.blackColor()
     }
+    var placeholderColor: UIColor {
+        return UIColor.lightTextColor()
+    }
+    var tintColor: UIColor {
+        return UIColor(red: 0, green: 100.0/255.0, blue: 220.0/255.0, alpha: 1)
+    }
+    var leftViewTintColor: UIColor {
+        return UIColor(red: 0, green: 122.0/255.0, blue: 1, alpha: 1)
+    }
+    var rightViewTintColor: UIColor {
+        return UIColor(red: 0, green: 122.0/255.0, blue: 1, alpha: 1)
+    }
+    var backgroundColor: UIColor {
+        return UIColor.whiteColor()
+    }
+}
+```
 
 Here I use colors that are close to system default values.
 
 In a subclass of UITextField, `FormTextField` I have custom right accessory view. To define it's style I need to extend `TextFieldTheme` protocol and add additional property. Also I want `FormTextField` to change it's background color whet it is highlighted. For that I can define separate protocol that will define background color for highlighted state.
 
-    protocol HighlightedBackgroundTheme {
-        var highlightedBackgroundColor: UIColor {get}
+```swift
+protocol HighlightedBackgroundTheme {
+    var highlightedBackgroundColor: UIColor {get}
+}
+
+protocol FormTextFieldTheme: TextFieldTheme, HighlightedBackgroundTheme {
+    var invalidIndicatorColor: UIColor {get}
+}
+
+extension FormTextFieldTheme {
+    var highlightedBackgroundColor: UIColor {
+        return backgroundColor
     }
-    
-    protocol FormTextFieldTheme: TextFieldTheme, HighlightedBackgroundTheme {
-        var invalidIndicatorColor: UIColor {get}
+
+    var invalidIndicatorColor: UIColor {
+        return UIColor(red: 220.0/255.0, green: 0, blue: 0, alpha: 1)
     }
-    
-    extension FormTextFieldTheme {
-        var highlightedBackgroundColor: UIColor {
-            return backgroundColor
-        }
-    
-        var invalidIndicatorColor: UIColor {
-            return UIColor(red: 220.0/255.0, green: 0, blue: 0, alpha: 1)
-        }
-    }
+}
+```
 
 Now I have everything to create concrete theme.
 
-    struct FormTextFieldDefaultTheme: FormTextFieldTheme {}
+```swift
+struct FormTextFieldDefaultTheme: FormTextFieldTheme {}
+
+struct FormTextFieldCustomTheme: FormTextFieldTheme {
     
-    struct FormTextFieldCustomTheme: FormTextFieldTheme {
-        
-        var textColor: UIColor {
-            return UIColor.whiteColor()
-        }
-        var placeholderColor: UIColor {
-            return UIColor.lightTextColor()
-        }
-        var tintColor: UIColor {
-            return UIColor.whiteColor()
-        }
-        var leftViewTintColor: UIColor {
-            return placeholderColor
-        }
-        var rightViewTintColor: UIColor {
-            return placeholderColor
-        }
-        var backgroundColor: UIColor {
-            return UIColor(red: 103.0/255.0, green: 103.0/255.0, blue: 103.0/255.0, alpha: 1)
-        }
-        
-        var highlightedBackgroundColor: UIColor {
-            return UIColor(red: 145.0/255.0, green: 145.0/255.0, blue: 145.0/255.0, alpha: 1)
-        }
-        
+    var textColor: UIColor {
+        return UIColor.whiteColor()
     }
+    var placeholderColor: UIColor {
+        return UIColor.lightTextColor()
+    }
+    var tintColor: UIColor {
+        return UIColor.whiteColor()
+    }
+    var leftViewTintColor: UIColor {
+        return placeholderColor
+    }
+    var rightViewTintColor: UIColor {
+        return placeholderColor
+    }
+    var backgroundColor: UIColor {
+        return UIColor(red: 103.0/255.0, green: 103.0/255.0, blue: 103.0/255.0, alpha: 1)
+    }
+    
+    var highlightedBackgroundColor: UIColor {
+        return UIColor(red: 145.0/255.0, green: 145.0/255.0, blue: 145.0/255.0, alpha: 1)
+    }
+    
+}
+```
 
 Here I define default theme that inherits all it's values from protocol extension. And custom theme that overrides default values.
 
 Now how can I use those themes? First I can extend UITextField and add method that will apply theme on it.
 
-    extension UITextField {
-        func updateAppearance(theme: TextFieldTheme) {
-            tintColor = theme.tintColor
-            textColor = theme.textColor
-            backgroundColor = theme.backgroundColor
-            leftView?.tintColor = theme.leftViewTintColor
-            rightView?.tintColor = theme.rightViewTintColor
-            attributedPlaceholder = attributedPlaceholder(theme)
-        }
-        
-        func attributedPlaceholder(theme: TextFieldTheme) -> NSAttributedString? {
-            if let placeholder = placeholder {
-                return NSAttributedString(string: placeholder, attributes: [
-                    NSForegroundColorAttributeName: theme.placeholderColor
-                    ])
-            }
-            return nil
-        }
+```swift
+extension UITextField {
+    func updateAppearance(theme: TextFieldTheme) {
+        tintColor = theme.tintColor
+        textColor = theme.textColor
+        backgroundColor = theme.backgroundColor
+        leftView?.tintColor = theme.leftViewTintColor
+        rightView?.tintColor = theme.rightViewTintColor
+        attributedPlaceholder = attributedPlaceholder(theme)
     }
+    
+    func attributedPlaceholder(theme: TextFieldTheme) -> NSAttributedString? {
+        if let placeholder = placeholder {
+            return NSAttributedString(string: placeholder, attributes: [
+                NSForegroundColorAttributeName: theme.placeholderColor
+                ])
+        }
+        return nil
+    }
+}
+```
 
 Now I can apply `TextFieldTheme` to any kind of UITextField including `FormTextField`. I can reuse that and in `FormTextField` I can add method that will apply `FormTextFieldTheme`.
 
-        var theme: FormTextFieldTheme = FormTextFieldDefaultTheme() {
-            didSet {
-                updateAppearance()
-            }
-        }
-        
-        func updateAppearance() {
-            updateAppearance(theme)
-        }
-        
-        func updateAppearance(theme: FormTextFieldTheme) {
-            super.updateAppearance(theme)
-            backgroundColor = highlighted ?
-                theme.highlightedBackgroundColor :
-                theme.backgroundColor
-            (rightView as? InvalidInputIndicator)?.backgroundColor = theme.invalidIndicatorColor
-        }
+```swift
+var theme: FormTextFieldTheme = FormTextFieldDefaultTheme() {
+    didSet {
+        updateAppearance()
+    }
+}
+
+func updateAppearance() {
+    updateAppearance(theme)
+}
+
+func updateAppearance(theme: FormTextFieldTheme) {
+    super.updateAppearance(theme)
+    backgroundColor = highlighted ?
+        theme.highlightedBackgroundColor :
+        theme.backgroundColor
+    (rightView as? InvalidInputIndicator)?.backgroundColor = theme.invalidIndicatorColor
+}
+```
 
 Here I also define stored property for theme and shorthand method that will apply current theme.
 

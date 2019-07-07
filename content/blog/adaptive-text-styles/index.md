@@ -3,7 +3,7 @@ id: 5b6f5a3a9d28c70f0f015f7f
 title: Adaptive text styles
 date: 2017-01-19T21:00:00.000Z
 description: ""
-tags: ""
+tags: Swift, iOS
 ---
 
 Textual content is the essential part of any app and text handling in iOS has been improving through last years. Starting with iOS 7 we have dynamic types and text styles, then in iOS 8 we got self sizing cells that help a lot when you want to adopt dynamic type. With trait collections we also expanded the ways how we can adapt text to different environments. And Apple was constantly extending those APIs exposing new font styles, font wights and so on.
@@ -36,13 +36,15 @@ Let's start from the very beginning. Before you start to implement anything you 
 
 With this style guide at hand you can easily transform it to code that can look something like this:
 
-    func bodyTextStyle(_ traitCollection: UITraitCollection) -> UIFont? {
-      if case .compact = traitCollection.horizontalSizeClass {
-        return UIFont(name: "Comic Sans", size: 20)
-      } else {
-        return UIFont(name: "Comic Sans", size: 24)
-      }
-    }
+```swift
+func bodyTextStyle(_ traitCollection: UITraitCollection) -> UIFont? {
+  if case .compact = traitCollection.horizontalSizeClass {
+    return UIFont(name: "Comic Sans", size: 20)
+  } else {
+    return UIFont(name: "Comic Sans", size: 24)
+  }
+}
+```
 
 As you can see we already think about using different size for different size class. And that's what your designer should think about too.
 
@@ -50,7 +52,9 @@ As you can see we already think about using different size for different size cl
 
 When you are done with specifying your font style functions you will notice the obvious thing - they all have a same signature. Seems like a good candidate for a typealias:
 
-    public typealias TextStyle = (UITraitCollection) -> UIFont?
+```swift
+public typealias TextStyle = (UITraitCollection) -> UIFont?
+```
 
 Let's move on and think about views. What do we want is to be able to apply some font style to a view that displays text and to update it automatically. For update we might need a function like `func updateStyle()`. This function should be called when trait collection or content size category changes. But how do we do that?
 
@@ -62,92 +66,107 @@ There is a interesting solution that I came up with, inspired by [this post](htt
 
 Instead of responding to trait collection change in the view itself we can add an invisible subview that will respond to them. These changes are propagated by UIKit from view to all of its subviews no matter if they are actually rendered or not. So the only thing that we need to do is to create a subclass of `UIView`, override `traitCollectionDidChange` method and add the instance of this view as a subview in a view that we want to update.
 
-    class StyleProxyView: UIView {
-        
-      override public func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        superview?.updateStyle()
-      }
-        
-    }
+```swift
+class StyleProxyView: UIView {
+    
+  override public func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+    superview?.updateStyle()
+  }
+    
+}
+```
 
 Looks good (you will see why I called it `StyleProxyView` later) but we can do it a bit more type safe with generics:
 
+```swift    
+class StyleProxyView<S: UIView>: UIView {
     
-    class StyleProxyView<S: UIView>: UIView {
-        
-      weak var instance: S? { return superview as? S }
-        
-      override public func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        instance?.updateStyle()
-      }
-        
-    }
+  weak var instance: S? { return superview as? S }
+    
+  override public func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+    instance?.updateStyle()
+  }
+    
+}
+```
 
 This way we will be able to add `StyleProxyView<UILabel>` only to `UILabel`.  
 But most likely we will not need to change the style of any view, as plain `UIView` does not render any text. We will need it for `UILabel`, `UIButton` and some other views. So instead of constraining `StyleProxyView` to any `UIView` let's constrain it with a protocol. Let's call it something... stylish:
 
-    protocol Stylish {
-      func updateStyle()
-    }
+```swift
+protocol Stylish {
+  func updateStyle()
+}
+
+class StyleProxyView<S: Stylish>: UIView {
     
-    class StyleProxyView<S: Stylish>: UIView {
-        
-      var instance: S? { return superview as? S }
-        
-      override public func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        instance?.updateStyle()
-      }
-        
-    }
+  var instance: S? { return superview as? S }
+    
+  override public func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+    instance?.updateStyle()
+  }
+    
+}
+```
 
 To update style we need a way to set it up first. Looking back at `UIAppearance` we can use a similar interface:
 
-    label.style.font = bodyTextStyle
+```swift
+label.style.font = bodyTextStyle
+```
 
 Instead of setting property on a label (which is just `UILabel`) we set this property through a proxy object. And then we can use it to update label itself:
 
-    extension UILabel: Stylish {
-      func updateStyle() {
-        font = style.font(traitCollection) ?? font
-        invalidateIntrinsicContentSize()
-      }
-    }
+```swift
+extension UILabel: Stylish {
+  func updateStyle() {
+    font = style.font(traitCollection) ?? font
+    invalidateIntrinsicContentSize()
+  }
+}
+```
 
 But what is this proxy? Is it `StyleProxyView` that we defined before? Not exactly. You see, the `StyleProxyView` is still a `UIView`, so if we make `style` a `StyleProxyView` we will be able to do things like `label.style.frame = ...` which does not make any sense. Instead it will be a plain `NSObject` (on why we need an `NSObject` later) object:
 
-    public class StyleProxy<S: Stylish>: NSObject {
-      fileprivate override init() { }
-    }
+```swift
+public class StyleProxy<S: Stylish>: NSObject {
+  fileprivate override init() { }
+}
+```
 
 We will still use a `StyleProxyView` to access `style` property:
 
-    class StyleProxyView<S: Stylish>: UIView {
-      var style: StyleProxy<S> = StyleProxy()
-      ...
-    }
+```swift
+class StyleProxyView<S: Stylish>: UIView {
+  var style: StyleProxy<S> = StyleProxy()
+  ...
+}
+```
 
 And now the missing part:
 
-    extension Stylish where Self: UIView {
-        
-      private(set) var style: StyleProxy<Self> {
-        get {
-          if let proxy = subviews.first(where: { $0 is StyleProxyView<Self> }) as? StyleProxyView<Self> {
-            return proxy.style
-          }
-            
-          let proxy = StyleProxyView<Self>()
-          addSubview(proxy)
-          return proxy.style
-        }
-        set {
-          guard let proxy = subviews.first(where: { $0 is StyleProxyView<Self> }) as? StyleProxyView<Self> else { return }
-          proxy.style = newValue
-          updateStyle()
-        }
-      }
+```swift
+extension Stylish where Self: UIView {
     
+  private(set) var style: StyleProxy<Self> {
+    get {
+      if let proxy = subviews.first(where: { $0 is StyleProxyView<Self> }) as? StyleProxyView<Self> {
+        return proxy.style
+      }
+        
+      let proxy = StyleProxyView<Self>()
+      addSubview(proxy)
+      return proxy.style
     }
+    set {
+      guard let proxy = subviews.first(where: { $0 is StyleProxyView<Self> }) as? StyleProxyView<Self> else { return }
+      proxy.style = newValue
+      updateStyle()
+    }
+  }
+
+}
+```
 
 First time when we access `style` property we are adding a `StyleProxyView` as a subview. On next calls we will reuse that instance. Then we return its `style` property. Setter does not even require any explanation.
 
@@ -157,32 +176,36 @@ Here we defined `style` property as `var style: StyleProxy<Self>`, so when we us
 
 Now when we can access style with `label.style` we can move on and add actual style properties to it. Here our generic constraints will start to help us as we are going to extend `StyleProxy` type for different types of its generic parameter `S`:
 
-    private var _textStyleKey: Void?
+```swift
+private var _textStyleKey: Void?
+
+public extension StyleProxy where S: UILabel {
     
-    public extension StyleProxy where S: UILabel {
-        
-      var font: TextStyle? {
-        get {
-          //swifty wrapper for objc_getAssociatedObject
-          return associatedValue(forKey: &_textStyleKey)
-        }
-        set {
-          //swifty wrapper for objc_setAssociatedObject
-          retain(newValue, forKey: &_textStyleKey)
-        }
-      }
-        
+  var font: TextStyle? {
+    get {
+      //swifty wrapper for objc_getAssociatedObject
+      return associatedValue(forKey: &_textStyleKey)
     }
+    set {
+      //swifty wrapper for objc_setAssociatedObject
+      retain(newValue, forKey: &_textStyleKey)
+    }
+  }
+    
+}
+```
 
 Here for any `StyleProxy` with `UILabel` constraint we are adding `textStyle` property storing it as associated object (that's why we used `NSObject` as a base class for it) as we can not have stored variables in extensions, but we still have access to Objective-C runtime and can leverage it.
 
 Now we can finally use it in `updateStyle`:
 
-    extension UILabel: Stylish {
-      func updateStyle() {
-        font = style.font(traitCollection) ?? font
-      }
-    }
+```swift
+extension UILabel: Stylish {
+  func updateStyle() {
+    font = style.font(traitCollection) ?? font
+  }
+}
+```
 
 That's it. Now when you will do `label.style.textStyle = boldTextStyle` it will add a style proxy view that will respond to trait collection changes by calling `updateStyle` method defined on `UILabel` where you will update its font. You write it once and use it everywhere.
 

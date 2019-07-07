@@ -12,22 +12,26 @@ There were few times already when I used this little-known feature of Swift in r
 
 Here is the original code from the real app:
 
-    if let cutoffDate = menu?.cutoffDate where menu?.mealSwapEnabledForProduct == true {
-      ...
-    } else {
-      ...
-    }
+```swift
+if let cutoffDate = menu?.cutoffDate where menu?.mealSwapEnabledForProduct == true {
+  ...
+} else {
+  ...
+}
+```
 
 Very trivial piece of code. But it contains one problem - it communicate wrong intention. When optional binding comes first and is followed by `where` it may seem that we make decision based on the value in this optional and the boolean expression is secondary. But in fact decision here should be made based on the boolean expression.
 
 We can make it much better because we don't have to have `where` always at the end of `if` statement:
 
-    if menu?.mealSwapEnabledForProduct == true,
-      let cutoffDate = menu?.cutoffDate {
-      ...
-    } else {
-      ...
-    }
+```swift
+if menu?.mealSwapEnabledForProduct == true,
+  let cutoffDate = menu?.cutoffDate {
+  ...
+} else {
+  ...
+}
+```
 
 I think this way the code communicates our logic and intention much better.
 
@@ -54,12 +58,14 @@ So this grammar says that condition can start with expression (boolean) or avail
 
 For example this is a valid `if` statement:
 
-    if
-      #available(watchOS 2, *), 
-      booleanExpr1 && booleanExpr2, 
-      #available(iOS 9, *), 
-      let value11 = value1 where value11 > 0,
-      case let .Some(value1) = value1 where value1 > 0,
-      #available(OSX 10, *), 
-      case let .Some(value2) = value2 where value2 < 0,
-      let value22 = value2 where value22 < 0 {
+```swift
+if
+  #available(watchOS 2, *), 
+  booleanExpr1 && booleanExpr2, 
+  #available(iOS 9, *), 
+  let value11 = value1 where value11 > 0,
+  case let .Some(value1) = value1 where value1 > 0,
+  #available(OSX 10, *), 
+  case let .Some(value2) = value2 where value2 < 0,
+  let value22 = value2 where value22 < 0 {
+```

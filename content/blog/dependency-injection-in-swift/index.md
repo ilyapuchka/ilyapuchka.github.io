@@ -3,12 +3,10 @@ id: 5b6f5a3a9d28c70f0f015f74
 title: Dependency Injection (DI) in Swift
 date: 2016-05-28T18:24:56.000Z
 description: ""
-tags: ""
+tags: Swift, Dependency Injection
 ---
 
-> This post is a script of the talk that I've made on [UIKonf'16](http://www.uikonf.com). That was a first time for me to present on such a big conference and honestly I'm not even close to a public speaker so you may enjoy just reading it more. Anyway here is the video. And slides are [here](https://speakerdeck.com/ilyapuchka/dependency-injection-in-swift).
-
-<!-- description -->
+This post is a script of the talk that I've made on [UIKonf'16](http://www.uikonf.com). That was a first time for me to present on such a big conference and honestly I'm not even close to a public speaker so you may enjoy just reading it more. Anyway here is the video. And slides are [here](https://speakerdeck.com/ilyapuchka/dependency-injection-in-swift).
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/Jg5MvmR3TtM?list=PLdr22uU_wISqm9QbnczWxXs9qyuWpSU4k" frameborder="0" allowfullscreen></iframe>
 
@@ -59,16 +57,18 @@ Let's see how they look like using examples from Cocoa frameworks.
 
 Here is an example of constructor injection from CoreData:
 
-    class NSPersistentStore : NSObject {
+```swift
+class NSPersistentStore : NSObject {
+
+    init(persistentStoreCoordinator root: NSPersistentStoreCoordinator?, 
+        configurationName name: String?, 
+        URL url: NSURL, 
+        options: [NSObject: AnyObject]?)
+        
+    var persistentStoreCoordinator: NSPersistentStoreCoordinator? { get }
     
-    	init(persistentStoreCoordinator root: NSPersistentStoreCoordinator?, 
-    		configurationName name: String?, 
-    		URL url: NSURL, 
-    		options: [NSObject: AnyObject]?)
-    		
-    	var persistentStoreCoordinator: NSPersistentStoreCoordinator? { get }
-    	
-    }
+}
+```
 
 Here the instance of persistent store coordinator is passed in constructor of `NSPersistentStore` along with some other parameters. Then reference to coordinator is stored and can not be changed in runtime.
 
@@ -82,12 +82,13 @@ But there are cases when constructor injection is not possible or does not fit w
 
 This pattern is all over the place in any iOS application. For example delegate pattern is often implemented using property injection.
 
-    extension UIViewController {
-    
-        weak public var transitioningDelegate: 
-        		UIViewControllerTransitioningDelegate?
-        		
-    }
+```swift
+extension UIViewController {
+
+    weak public var transitioningDelegate: UIViewControllerTransitioningDelegate?
+            
+}
+```
 
 Here for example view controller exposes writable property for transitioning delegate that we can change at any moment if we want to override the dafault behavior.
 
@@ -109,11 +110,13 @@ First of all we need to have some default implementation in place or handle opti
 
 Next pattern, method injection, is as simple as passing argument to a method. For example here is `NSCoding` protocol:
 
-    public protocol NSCoding {
+```swift
+public protocol NSCoding {
+
+    public func encodeWithCoder(aCoder: NSCoder)
     
-        public func encodeWithCoder(aCoder: NSCoder)
-        
-    }
+}
+```
 
 Each time the method is called different instance and even implementation of `NSCoder` can be passed as an argument.
 
@@ -125,13 +128,15 @@ Method injection is usually used when dependency can vary with each method call 
 
 The last pattern - ambient context - is hard to find in Cocoa. Probably `NSURLCache` is the most close example.
 
-    public class NSURLCache : NSObject {
+```swift
+public class NSURLCache : NSObject {
+
+    public class func setSharedURLCache(cache: NSURLCache)
     
-    	public class func setSharedURLCache(cache: NSURLCache)
-    	
-    	public class func sharedURLCache() -> NSURLCache
-    	
-    }
+    public class func sharedURLCache() -> NSURLCache
+    
+}
+```
 
 Here for example we can set any subclass of `NSURLCache` as a shared instance and then access it with static getter. And this is its main difference from singleton which is not writable.
 
@@ -159,47 +164,51 @@ Ideally there should be one Composition Root in the application and it should be
 
 Here is for example implementation of Composition Root from VIPER example application.<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>
 
-    class AppDependencies {
-        init() {
-            configureDependencies()
-        }
-        
-        func configureDependencies() {
-            // Root Level Classes
-            let coreDataStore = CoreDataStore()
-            let clock = DeviceClock()
-            let rootWireframe = RootWireframe()
-    	    
-            // List Module Classes
-            let listPresenter = ListPresenter()
-            let listDataManager = ListDataManager()
-            let listInteractor = ListInteractor(dataManager: listDataManager, clock: clock)
-    	    ...    
-    	    listInteractor.output = listPresenter
-            listPresenter.listInteractor = listInteractor
-            listPresenter.listWireframe = listWireframe
-            listWireframe.addWireframe = addWireframe
-            ...
-        }
+```swift
+class AppDependencies {
+    init() {
+        configureDependencies()
     }
+    
+    func configureDependencies() {
+        // Root Level Classes
+        let coreDataStore = CoreDataStore()
+        let clock = DeviceClock()
+        let rootWireframe = RootWireframe()
+        
+        // List Module Classes
+        let listPresenter = ListPresenter()
+        let listDataManager = ListDataManager()
+        let listInteractor = ListInteractor(dataManager: listDataManager, clock: clock)
+        ...    
+        listInteractor.output = listPresenter
+        listPresenter.listInteractor = listInteractor
+        listPresenter.listWireframe = listWireframe
+        listWireframe.addWireframe = addWireframe
+        ...
+    }
+}
+```
 
 Here we have some root classes, root wireframe that only manages window root view controller and some separate components for some list of todo items, like presenter, interactor, wireframe. Then we just wire them all together. And it is all implemented in one class. And the only place where we use this class is the app delegate:
 
-    @UIApplicationMain
-    class AppDelegate: UIResponder, UIApplicationDelegate {
-        var window: UIWindow?
-        
-        let appDependencies = AppDependencies()
+```swift
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    var window: UIWindow?
     
-        func application(
-        	application: UIApplication, 
-        	didFinishLaunchingWithOptions launchOptions: [NSObject : AnyObject]?) -> Bool {
-            
-            appDependencies.installRootViewControllerIntoWindow(window!)
-            
-            return true
-        }
+    let appDependencies = AppDependencies()
+
+    func application(
+        application: UIApplication, 
+        didFinishLaunchingWithOptions launchOptions: [NSObject : AnyObject]?) -> Bool {
+        
+        appDependencies.installRootViewControllerIntoWindow(window!)
+        
+        return true
     }
+}
+```
 
 Here we first create dependencies class which will configure all of the components and wire them together. Then we just call a method that sets root view controller in a window.
 
@@ -217,15 +226,16 @@ But as it often happens while we are trying to properly implement some patterns 
 
 The first one is control freak. That is simply when we don't use DI at all. When consumer of dependency controls how and when the dependency is created. It happens every time when consumer gets a dependency directly or indirectly using constructor anywhere outside Composition Root. For example in its own constructor or just when it needs it.
 
-    class RecipesService {
+```swift
+class RecipesService {
+
+    let repository: RecipesRepository
     
-        let repository: RecipesRepository
-        
-        init() {
-            self.repository = CoreDataRecipesRepository()
-        }
+    init() {
+        self.repository = CoreDataRecipesRepository()
     }
-    
+}
+```
 
 But does that mean that we are not allowed to use constructors at all? Of course not. It depends on what kind of dependency we construct.
 
@@ -243,15 +253,16 @@ So first of all we need to understand if the dependency is volatile or stable an
 
 The next anti-pattern is called Bastard injection. That happens when we have constructor that lets us provide dependencies for tests and another constructor with default implementations used in production. In Swift we can do that easily with default arguments like in the following example.
 
-    class RecipesService {
+```swift
+class RecipesService {
+
+    let repository: RecipesRepository
     
-        let repository: RecipesRepository
-        
-        init(repository: RecipesRepository = CoreDataRecipesRepository()) {
-            self.repository = repository
-        }
+    init(repository: RecipesRepository = CoreDataRecipesRepository()) {
+        self.repository = repository
     }
-    
+}
+``` 
 
 From one point this pattern improves testability. The problem of this anti-pattern is in using as a default a foreign default - defined in other module. That makes our code testable, but tightly coupled with another module. If default implementation is local the impact of this anti-pattern is much smaller. Maybe it will be better to refactor it to property injection instead. But when default implementation is foreign we should use constructor injection and do not provide default value for this argument. Instead we should provide it in the Composition Root. This way we don't loose any flexibility but avoid tight coupling with another module.
 
@@ -261,21 +272,22 @@ The last anti-pattern I will talk about is a Service Locator. Service Locator is
 
 Let's look at an example:
 
-    let locator = ServiceLocator.sharedInstance
+```swift
+let locator = ServiceLocator.sharedInstance
+
+locator.register( { CoreDataRecipesRepository() }, 
+                    forType: RecipesRepository.self)
+
+class RecipesService {
+
+    let repository: RecipesRepository
     
-    locator.register( { CoreDataRecipesRepository() }, 
-    				 	forType: RecipesRepository.self)
-    
-    class RecipesService {
-    
-        let repository: RecipesRepository
-        
-        init() {
-            let locator = ServiceLocator.sharedInstance
-            self.repository = locator.resolve(RecipesRepository.self)
-        }
+    init() {
+        let locator = ServiceLocator.sharedInstance
+        self.repository = locator.resolve(RecipesRepository.self)
     }
-    
+}
+```    
 
 In this example we have some service that we can access using static property. Then for the type of our dependency we register a factory that produces some concrete instance. Then we ask this service for our dependency when we need it instead of using constructor or property injection.
 
@@ -345,59 +357,66 @@ First one, Typhoon, is probably the most popular DI container among Cocoa develo
 
 In terms of API Typhoon building blocks are objects called assemblies. Here is an example of such assembly interface. It looks like a simple factory.
 
-    public class APIClientAssembly: TyphoonAssembly {
-        
-        public dynamic func apiClient() -> AnyObject { 
-    	    ... 
-        }
-        
-        public dynamic func session() -> AnyObject { 
-    	    ... 
-        }
-        
-        public dynamic func logger() -> AnyObject { 
-    	    ... 
-        }
-        
+```swift
+public class APIClientAssembly: TyphoonAssembly {
+    
+    public dynamic func apiClient() -> AnyObject { 
+        ... 
     }
+    
+    public dynamic func session() -> AnyObject { 
+        ... 
+    }
+    
+    public dynamic func logger() -> AnyObject { 
+        ... 
+    }
+    
+}
+```
 
 But in implementation instead of returning a concrete instance of some type like from factory method we return a `TyphoonDefinition` that describes how that instance should be created when it is requested. What initialiser should be used and with what perameters, what properties should be injected.
 
-    public dynamic func apiClient() -> AnyObject {
-        return TyphoonDefinition.withClass(APIClientImp.self) { definition in
+```swift
+public dynamic func apiClient() -> AnyObject {
+    return TyphoonDefinition.withClass(APIClientImp.self) { definition in
+        
+        definition.useInitializer(#selector(APIClientImp.init(session:))) {
+            initializer in
             
-            definition.useInitializer(#selector(APIClientImp.init(session:))) {
-                initializer in
-                
-                initializer.injectParameterWith(self.session())
-            }
-            
-            definition.injectProperty("logger", with: self.logger())
+            initializer.injectParameterWith(self.session())
         }
+        
+        definition.injectProperty("logger", with: self.logger())
     }
+}
+```
 
 Here we define that `APIClient` will be created with `init(session:)` constructor and that it's session argument will be provided by the same assembly. Also we define that logger property will be injected with a logger instance also provided by the same assembly.
 
 We can also define different scopes or lifetime strategies for components. For example with Singleton scope Typhoon will create only one instance of logger.
 
-    public dynamic func session() -> AnyObject {
-        return TyphoonDefinition.withClass(NSURLSession.self) { definition in
-            definition.useInitializer(#selector(NSURLSession.sharedSession))
-        }
+```swift
+public dynamic func session() -> AnyObject {
+    return TyphoonDefinition.withClass(NSURLSession.self) { definition in
+        definition.useInitializer(#selector(NSURLSession.sharedSession))
     }
-        
-    public dynamic func logger() -> AnyObject {
-        return TyphoonDefinition.withClass(ConsoleLogger.self) { definition in
-            definition.scope = .Singleton
-        }
-    }
+}
     
+public dynamic func logger() -> AnyObject {
+    return TyphoonDefinition.withClass(ConsoleLogger.self) { definition in
+        definition.scope = .Singleton
+    }
+}
+```
 
 To get an instance of some type from assembly we first activate it and then just call its interface method. When activated assembly methods will return not `TyphoonDefinition`s but instances, created based on the rules that we provided.
 
-    let assembly = APIClientAssembly().activate()
-    
-    let apiClient = assembly.apiClient() as! APIClient
+```swift
+let assembly = APIClientAssembly().activate()
+
+let apiClient = assembly.apiClient() as! APIClient
+```
 
 To make this work Typhoon uses Objective-C runtime a lot. And in Swift applications using Objective-C runtime looks just not right. We still can use Typhoon in Swift as well as in Objective-C. But there are some problems we will face with:
 
@@ -419,44 +438,51 @@ In terms of API it takes approach that is more traditional for DI containers on 
 
 Here is the same example that we used for Typhoon.
 
-    let container = DependencyContainer()
-    
-    container.register { 
-    	try APIClientImp(session: container.resolve()) as APIClient 
-    }
-    .resolveDependencies { container, client in
-    	client.logger = try container.resolve()
-    }
-    
-    container.register { NSURLSession.sharedSession() as NetworkSession }
-    container.register(.Singleton) { ConsoleLogger() as Logger }
-    
+```swift
+let container = DependencyContainer()
+
+container.register { 
+    try APIClientImp(session: container.resolve()) as APIClient 
+}
+.resolveDependencies { container, client in
+    client.logger = try container.resolve()
+}
+
+container.register { NSURLSession.sharedSession() as NetworkSession }
+container.register(.Singleton) { ConsoleLogger() as Logger }
+```
 
 First we register `APIClientImp` as implementation of `APIClient` protocol. Container will also resolve contructor argument and when instance is created will set `logger` property. For session parameter container will use shared url session and for logger it will create a singleton instance.
 
 Then when we need to get the instance of `APIClient` we simply call `resolve` method of the container:
 
-    let apiClient = try! container.resolve() as APIClient
+```swift
+let apiClient = try! container.resolve() as APIClient
+```
 
 You may notice that the API is almost the same as we saw in Service Locator. But it is not about API or implementation, it is about how we use it. If you don't want to use container as a Service Locator remember that you should call it only in the Composition Root.
 
 Dip also provides some cool features like _auto-wiring_. For example we can define logger property to be automatically injected. Container will first create the instance of `APIClient` and then will use its mirror to find `logger` property and inject the real instance in it.
 
-    class APIClientImp: APIClient {
+```swift
+class APIClientImp: APIClient {
+
+    private let _logger = Injected<Logger>()
     
-    	private let _logger = Injected<Logger>()
-    	
-    	var logger: Logger? { return _logger.value }
-    	
-    }
+    var logger: Logger? { return _logger.value }
+    
+}
+```
 
 Then when we register `APIClient` using its constructor instead of calling `resolve` to get a `NetworkSession` argument we just say that we want to use a first argument passed to the factory closure. Then container will infer its type and resolve it for us.
 
-    class APIClientImp: APIClient {
-    	init(session: NetworkSession) { ... }
-    }
-    
-    container.register { APIClientImp(session: $0) as APIClient }
+```swift
+class APIClientImp: APIClient {
+    init(session: NetworkSession) { ... }
+}
+
+container.register { APIClientImp(session: $0) as APIClient }
+```
 
 And that can simplify configuration a lot.
 

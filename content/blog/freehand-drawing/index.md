@@ -12,29 +12,31 @@ tags: ""
 
 Naive implementation of rendering user's freehand drawing is strait forward. We need to listen to touch events from view and construct the path appending lines to each subsequent point.
 
-    public class LineDrawing: Drawing {
-        public var canvas: DrawableView?
-        public var path = UIBezierPath()
-     
-        public init() {}
+```swift
+public class LineDrawing: Drawing {
+    public var canvas: DrawableView?
+    public var path = UIBezierPath()
     
-        public func touchesBegan(at point: CGPoint) {
-            path.removeAllPoints()
-            path.moveToPoint(point)
-        }
-    
-        public func touchesMoved(to point: CGPoint) {
-            path.addLineToPoint(point)
-        }
-    
-        public func touchesEnded(at point: CGPoint) {
-            path.addLineToPoint(point)
-        }
-    
-        public func touchesCancelled(at point: CGPoint) {
-            path.removeAllPoints()
-        }
+    public init() {}
+
+    public func touchesBegan(at point: CGPoint) {
+        path.removeAllPoints()
+        path.moveToPoint(point)
     }
+
+    public func touchesMoved(to point: CGPoint) {
+        path.addLineToPoint(point)
+    }
+
+    public func touchesEnded(at point: CGPoint) {
+        path.addLineToPoint(point)
+    }
+
+    public func touchesCancelled(at point: CGPoint) {
+        path.removeAllPoints()
+    }
+}
+```
 
 But usually such naive approach does not provide acceptable results. Strokes looks ridgid and angular.
 
@@ -42,45 +44,47 @@ But usually such naive approach does not provide acceptable results. Strokes loo
 
 Luckily it's not very hard to improve our drawing strategy by utilizing Bezier curves. Intead of appending line segments we can append curve segments. We need four points to draw Bezier curve - start point, end point and two control points. So we need to accumulate touch points in array up to four, append curve segment and flush points array.
 
-    public class CurveDrawing: Drawing {
-        public var canvas: DrawableView?
-        public let path = UIBezierPath()
-        var controlPoints: [CGPoint] = []
-    
-        public init() {}
-    
-        public func touchesBegan(at point: CGPoint) {
-            controlPoints = [point]
-            path.removeAllPoints()
-            path.moveToPoint(point)
-        }
-    
-        public func touchesMoved(to point: CGPoint) {
-            guard controlPoints.count == 3 else {
-                controlPoints.append(point)
-                return
-            }
-            path.addCurveToPoint(
-                point,
-                controlPoint1: controlPoints[1],
-                controlPoint2: controlPoints[2]
-            )
-            controlPoints = [point]
-        }
-    
-        public func touchesEnded(at point: CGPoint) {
-            if controlPoints.count > 1 {
-                for _ in controlPoints.count..<4 {
-                    touchesMoved(to: point)
-                }
-            }
-            controlPoints = []
-        }
-    
-        public func touchesCancelled(at point: CGPoint) {
-            path.removeAllPoints()
-        }
+```swift
+public class CurveDrawing: Drawing {
+    public var canvas: DrawableView?
+    public let path = UIBezierPath()
+    var controlPoints: [CGPoint] = []
+
+    public init() {}
+
+    public func touchesBegan(at point: CGPoint) {
+        controlPoints = [point]
+        path.removeAllPoints()
+        path.moveToPoint(point)
     }
+
+    public func touchesMoved(to point: CGPoint) {
+        guard controlPoints.count == 3 else {
+            controlPoints.append(point)
+            return
+        }
+        path.addCurveToPoint(
+            point,
+            controlPoint1: controlPoints[1],
+            controlPoint2: controlPoints[2]
+        )
+        controlPoints = [point]
+    }
+
+    public func touchesEnded(at point: CGPoint) {
+        if controlPoints.count > 1 {
+            for _ in controlPoints.count..<4 {
+                touchesMoved(to: point)
+            }
+        }
+        controlPoints = []
+    }
+
+    public func touchesCancelled(at point: CGPoint) {
+        path.removeAllPoints()
+    }
+}
+```
 
 When touchs end we can loose some points at the end of the curve. To avoid that we repeat the last recorded point until we have enouth points to draw the last segment. Dependeing on how many points are missing it can result in a line or curve segment.
 
@@ -90,36 +94,37 @@ Looks better but still not ideal. As you can see there are obtuse angles at the 
 
 Instead of accumulating four control points we will take one more and use it as a first control point of the second curve. Then we calculate new end point for the first curve and create a curve itself. At the end we flush control points array and store there shifted end point (it will be start point if the next curve) and the first control point of the next curve that we already have.
 
-    public class SmoothDrawing: Drawing {
-        //The rest of the code is the same as in CurveDrawing
-     
-        public func touchesMoved(to point: CGPoint) {
-            guard controlPoints.count == 5 else {
-                controlPoints.append(point)
-                return 
-            }
-            let endPoint = CGPoint(
-                x: (controlPoints[2].x + point.x)/2,
-                y: (controlPoints[2].y + point.y)/2
-            )
-            path.addCurveToPoint(
-                endPoint,
-                controlPoint1: controlPoints[1],
-                controlPoint2: controlPoints[2]
-            )
-            controlPoints = [endPoint, point]
+```swift
+public class SmoothDrawing: Drawing {
+    //The rest of the code is the same as in CurveDrawing
+    
+    public func touchesMoved(to point: CGPoint) {
+        guard controlPoints.count == 5 else {
+            controlPoints.append(point)
+            return 
         }
-     
-        public func touchesEnded(at point: CGPoint) {
-            if controlPoints.count > 1 {
-                for _ in controlPoints.count..<5 {
-                    touchesMoved(to: point)
-                }
-            }
-            controlPoints = []
-        }
+        let endPoint = CGPoint(
+            x: (controlPoints[2].x + point.x)/2,
+            y: (controlPoints[2].y + point.y)/2
+        )
+        path.addCurveToPoint(
+            endPoint,
+            controlPoint1: controlPoints[1],
+            controlPoint2: controlPoints[2]
+        )
+        controlPoints = [endPoint, point]
     }
     
+    public func touchesEnded(at point: CGPoint) {
+        if controlPoints.count > 1 {
+            for _ in controlPoints.count..<5 {
+                touchesMoved(to: point)
+            }
+        }
+        controlPoints = []
+    }
+}
+```
 
 ![](/content/images/2016/07/smoothdrawing.png)
 

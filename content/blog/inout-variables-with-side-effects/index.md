@@ -15,41 +15,45 @@ Every app has some kind of caching. Let's say our caching strategy is very simpl
 
 For that you can write code that will probably look something like this:
 
-    if let cached = store.menuPreferences {
-        dispatch_async(dispatch_get_main_queue()) {
-            completion(preferences: cached, error: nil)
-        }
-    } else {
-        repository.getMenuPreferences({ (preferences, error) in
-            if let preferences = preferences {
-                self.store.setMenuPreferences(preferences)
-            }
-            completion(preferences: preferences, error: error)
-        })
+```swift
+if let cached = store.menuPreferences {
+    dispatch_async(dispatch_get_main_queue()) {
+        completion(preferences: cached, error: nil)
     }
+} else {
+    repository.getMenuPreferences({ (preferences, error) in
+        if let preferences = preferences {
+            self.store.setMenuPreferences(preferences)
+        }
+        completion(preferences: preferences, error: error)
+    })
+}
+```
 
 Pretty simple and straight forward. But what if you need to add caching for another piece of data? And another, and another and so on and on. Having to repeat this check-cache-or-make-request dance is just boring. So let's improve it and extract common logic to a method.
 
-    func serveCached<T>(inout cached: T?, @noescape updateCache: ((T?, ErrorType?)->())->(), completion: (T?, ErrorType?)->()) {
-        if let cached = cached {
-            dispatch_async(dispatch_get_main_queue()) {
-                completion(cached, nil)
-            }
-        } else {
-            updateCache({ response, error in
-                if let response = response {
-                    cached = response
-                }
-                completion(response, error)
-            })
+```swift
+func serveCached<T>(inout cached: T?, @noescape updateCache: ((T?, ErrorType?)->())->(), completion: (T?, ErrorType?)->()) {
+    if let cached = cached {
+        dispatch_async(dispatch_get_main_queue()) {
+            completion(cached, nil)
         }
+    } else {
+        updateCache({ response, error in
+            if let response = response {
+                cached = response
+            }
+            completion(response, error)
+        })
     }
-    
-    var preferences: MenuPreferences? {
-        get { return self.store.menuPreferences }
-        set { self.store.setMenuPreferences(newValue ?? []) }
-    
-    serveCached(&preferences, updateCache: repository.getMenuPreferences, completion: completion)
+}
+
+var preferences: MenuPreferences? {
+    get { return self.store.menuPreferences }
+    set { self.store.setMenuPreferences(newValue ?? []) }
+
+serveCached(&preferences, updateCache: repository.getMenuPreferences, completion: completion)
+```
 
 What we are doing here is that we are trying to use `inout` variable to wrap access to the storage. We do that by defining custom accessors for it. Yes, right on the local variable! (`willSet` and `didSet` will work exactly the same way). This way we will have a side effect on assignment. Then we pass it to the method, read from it and later assign new value to it.
 
@@ -59,25 +63,29 @@ Looks cool! Except that it will not work. To be more precise it will work only i
 
 But no worries! There is nothing here that can not be fixed with a simple boxing. Instead of passing `inout` variable to the method we will pass it a variable that boxes accessors instead:
 
-    final class Variable<T> {
+```swift
+final class Variable<T> {
+
+    let get: () -> T?
+    let set: (T?) -> ()
     
-        let get: () -> T?
-        let set: (T?) -> ()
-        
-        init(get value: () -> T?, set: (T?) -> ()) {
-            self.get = value
-            self.set = set
-        }
+    init(get value: () -> T?, set: (T?) -> ()) {
+        self.get = value
+        self.set = set
     }
+}
+```
 
 With this simple class we need to make some trivial changes in `serveCached` method and the calling part stays almost the same:
 
-    let preferences = Variable(
-        get: { self.store.menuPreferences },
-        set: { self.store.setMenuPreferences(newValue ?? []) }
-    )
-    
-    serveCached(preferences, updateCache: repository.getMenuPreferences, completion: completion)
+```swift
+let preferences = Variable(
+    get: { self.store.menuPreferences },
+    set: { self.store.setMenuPreferences(newValue ?? []) }
+)
+
+serveCached(preferences, updateCache: repository.getMenuPreferences, completion: completion)
+```
 
 #### Conclusion
 

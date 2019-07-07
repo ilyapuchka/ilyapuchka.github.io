@@ -36,28 +36,31 @@ First let's write a helper function that will find the farthest point.
 
 > For brevity I don't include functions that are used to calculate the distance between the point and the line segment. They are pretty trivial geometric calculations and you can find them in the source files for this playground.
 
-     typealias FarthestPoint = (index: Int, point: CGPoint!, distance: CGFloat)
-     
-     func farthestPoint(points: [CGPoint]) -> FarthestPoint? {
-        var farthest: FarthestPoint?
-        
-        //if there are less then two points in the set return nil
-        guard points.count >= 3 else { return farthest }
-     
-        let (p1, pn) = (points.first!, points.last!)
-        
-        //find the farthest point from the line segment between the start and the end points
-        for i in 1..<(points.count - 1) {
-            let distance = points[i].distance(to: (p1, pn))
-            if distance > (farthest?.distance ?? -CGFloat.max) {
-                farthest = (i, points[i], distance)
-            }
+```swift
+    typealias FarthestPoint = (index: Int, point: CGPoint!, distance: CGFloat)
+    
+    func farthestPoint(points: [CGPoint]) -> FarthestPoint? {
+    var farthest: FarthestPoint?
+    
+    //if there are less then two points in the set return nil
+    guard points.count >= 3 else { return farthest }
+    
+    let (p1, pn) = (points.first!, points.last!)
+    
+    //find the farthest point from the line segment between the start and the end points
+    for i in 1..<(points.count - 1) {
+        let distance = points[i].distance(to: (p1, pn))
+        if distance > (farthest?.distance ?? -CGFloat.max) {
+            farthest = (i, points[i], distance)
         }
-        return farthest
-     }
+    }
+    return farthest
+    }
+```
 
 With that function it is trivial to implement the algorithm.
 
+```swift
      func douglasPeucker(points: [CGPoint], tolerance: CGFloat) -> [CGPoint] {
         //if the farthest point can not be found include all points from the input set
         guard let farthest = farthestPoint(points) else { 
@@ -75,6 +78,7 @@ With that function it is trivial to implement the algorithm.
         //Now merge left and right parts removing duplicated point
         return Array([Array(left.dropLast()), right].flatten())
      }
+```
 
 Let's see how this algorithm works on a sample set of points.  
 First here is the input path built by connecting each sample point with line segments:

@@ -24,33 +24,37 @@ For interoperability with your native code JavaScriptCore requires conformance t
 
 Catch all JavaScript exceptions and rethrow them as native errors. Basically that's the only way to debug JavaScript code. Rethrowing JavaScript exceptions as native errors will help you to integrate it with native code and provide users feedback in case something is wrong in their JavaScript code. It's very easy to do with a simple helper method:
 
-    struct JSException: Error, CustomStringConvertible {
-        let exception: JSValue
-        var description: String {
-            return "\(exception)"
-        }
-        init(_ exception: JSValue) {
-            self.exception = exception
-        }
+```swift
+struct JSException: Error, CustomStringConvertible {
+    let exception: JSValue
+    var description: String {
+        return "\(exception)"
     }
-    
-    @discardableResult
-    func inJSContext(_ jsContext: JSContext, _ block: () -> JSValue?) throws -> JSValue? {
-        let result = block()
-        if let exception = jsContext.exception {
-            throw JSException(exception)
-        } else {
-            return result
-        }
+    init(_ exception: JSValue) {
+        self.exception = exception
     }
-    
-    try inJSContext(jsContext) { jsContext.evaluateScript(code) }
+}
+
+@discardableResult
+func inJSContext(_ jsContext: JSContext, _ block: () -> JSValue?) throws -> JSValue? {
+    let result = block()
+    if let exception = jsContext.exception {
+        throw JSException(exception)
+    } else {
+        return result
+    }
+}
+
+try inJSContext(jsContext) { jsContext.evaluateScript(code) }
+```
 
 You can also get all of the console logs with this trick ([source](https://medium.com/social-tables-tech/using-javascriptcore-in-a-production-ios-app-f09cfcd91fd6#.hwotyijv3) in Objective-C):
 
-    let consoleLog: @convention(block) (String)->() = { s in print(s) }
-    let console = jscontext.objectForKeyedSubscript("console")
-    console?.setObject(unsafeBitCast(consoleLog, to: AnyObject.self), forKeyedSubscript: "log" as NSString)
+```swift
+let consoleLog: @convention(block) (String)->() = { s in print(s) }
+let console = jscontext.objectForKeyedSubscript("console")
+console?.setObject(unsafeBitCast(consoleLog, to: AnyObject.self), forKeyedSubscript: "log" as NSString)
+```
 
 ##### Result
 
@@ -58,18 +62,20 @@ It's not possible (as far as I can tell) to use methods which `throws` even thou
 
 You can also use a simple decorator function that rethrows native error as JavaScript error:
 
-    func bridgingError<T>(_ expression: () throws -> T) -> T? {
-        do {
-            return try expression()
-        } catch {
-            JSContext.current().evaluateScript("throw \"\(error)\"")
-            return nil
-        }
+```swift
+func bridgingError<T>(_ expression: () throws -> T) -> T? {
+    do {
+        return try expression()
+    } catch {
+        JSContext.current().evaluateScript("throw \"\(error)\"")
+        return nil
     }
-    
-    func wrapperMethodCalledFromJavaScript() -> Any? {
-       return bridgingError { try wrapped.nativeMethodThatThrows() }
-    }
+}
+
+func wrapperMethodCalledFromJavaScript() -> Any? {
+    return bridgingError { try wrapped.nativeMethodThatThrows() }
+}
+```
 
 This way you can effectively rethrow native errors through JavaScript back to native code that invoked it or handle them in JavaScript code itself.
 
@@ -77,29 +83,33 @@ This way you can effectively rethrow native errors through JavaScript back to na
 
 You can not export methods with closure parameters. Instead of closure type use `JSValue` and `call(withArguments:)` when in native code you need to call a JavaScript function passed as a parameter. This way you can for example implement alternative API for handling errors (on JavaScript side you can pass `{}` if you don't need error handling)
 
-    func wrapperMethodCalledFromJavaScript(_ onError: JSValue) -> Any? {
-        do {
-            return try wrapped.nativeMethodThatThrows()
-        } catch {
-            onError.call(withArguments: [error])
-            return nil
-        }
+```swift
+func wrapperMethodCalledFromJavaScript(_ onError: JSValue) -> Any? {
+    do {
+        return try wrapped.nativeMethodThatThrows()
+    } catch {
+        onError.call(withArguments: [error])
+        return nil
     }
-    
-    wrapperMethodCalledFromJavaScript(function(error) { ... })
+}
+
+wrapperMethodCalledFromJavaScript(function(error) { ... })
+```
 
 ##### Constructors
 
 To be able to construct your exported native types in JavaScript you can define a static factory method in a protocol. Swift initialisers are not automatically exported by JavaScriptCore. To use them you can do some trick - cast your initializer to `@convention(block)` closure and register it in a JavaScript context with a type name as a key:
 
-    class JSVariable: NSObject, JSExportableVariable {
-        init(_ variable: String) { ... }
-    }
-    
-    let newVariable: @convention(block) (String) -> JSVariable = JSVariable.init
-    jsContext.setObject(unsafeBitCast(newVariable, to: AnyObject.self), forKeyedSubscript: "Variable" as NSString)
-    
-    var variable = new Variable("name")
+```swift
+class JSVariable: NSObject, JSExportableVariable {
+    init(_ variable: String) { ... }
+}
+
+let newVariable: @convention(block) (String) -> JSVariable = JSVariable.init
+jsContext.setObject(unsafeBitCast(newVariable, to: AnyObject.self), forKeyedSubscript: "Variable" as NSString)
+
+var variable = new Variable("name")
+```
 
 With that you will not be able to access static methods of this type, but it may be still better than defining unneeded factory methods.
 
@@ -107,12 +117,14 @@ With that you will not be able to access static methods of this type, but it may
 
 If you try to access property that is not present in the object you will get a nice `undefined` result of you script without any info what actually went wrong. In Cocoa in contrast to that we have Key-Value Coding which let us not only define `valueForKey` but also `valueForUndefinedKey`. Those methods are not available in JavaScript context (unless you define them in export protocol of course) and even if they would they will be not that convenient to use comparing with dot notation. There is a way to combine two approaches - using [Proxy](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Proxy). It let's you define i.e. getter or setter decorators which will be called every time you try to access any property on a proxy object. This is what we use in [Sourcery](https://github.com/krzysztofzablocki/Sourcery/blob/master/Sourcery/Generating/Template/JavaScript/JavaScriptTemplate.swift#L46) to catch some runtime errors in JavaScript templates.
 
-    let valueForKey: @convention(block) (NSObject, String) -> Any? = { target, key in
-            return target.value(forKey: key)
-    }
-    jsContext.setObject(valueForKey, forKeyedSubscript: "valueForKey" as NSString)
-    jsContext.setObject(myObject, forKeyedSubscript: "myObject" as NSString)
-    jsContext.evaluateScript("myObject = new Proxy(myObject, { get: valueForKey })")
+```swift
+let valueForKey: @convention(block) (NSObject, String) -> Any? = { target, key in
+    return target.value(forKey: key)
+}
+jsContext.setObject(valueForKey, forKeyedSubscript: "valueForKey" as NSString)
+jsContext.setObject(myObject, forKeyedSubscript: "myObject" as NSString)
+jsContext.evaluateScript("myObject = new Proxy(myObject, { get: valueForKey })")
+```
 
 This way we replace original object with `Proxy` that wraps it and every time any property will be accessed on this proxy the `valueForKey` block will be called where we can redirect to `NSObject`'s `value(forKey:)` or do what ever else.
 

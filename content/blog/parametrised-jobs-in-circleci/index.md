@@ -26,67 +26,67 @@ Unfortunately, I found that using workspaces adds significant overhead to the to
 
 For that reason, I had to opt out using workspaces and had to repeat all of the steps in each job...
 
-        regression_test_bupa:
-             <<: *container_config
-    
-             steps:
-                 - checkout
-                 - *lfs
-                 - *brew
-                 - *restore_gems_cache
-                 - *bundle_install
-                 - *save_gems_cache
-                 - *restore_cocoapods_cache
-                 - *pod_install
-                 - *save_cocoapods_cache
-                 - *restore_carthage_cache
-    
-                 - run:
-                     name: Fastlane
-                     no_output_timeout: 60m
-                     command: bundle exec fastlane regression_test_bupa
-    
-                 - *store_fastlane_output
-                 - *store_scan_results
-                 - *store_snapshot_diffs
+    regression_test_bupa:
+        <<: *container_config
+
+        steps:
+            - checkout
+            - *lfs
+            - *brew
+            - *restore_gems_cache
+            - *bundle_install
+            - *save_gems_cache
+            - *restore_cocoapods_cache
+            - *pod_install
+            - *save_cocoapods_cache
+            - *restore_carthage_cache
+
+            - run:
+                name: Fastlane
+                no_output_timeout: 60m
+                command: bundle exec fastlane regression_test_bupa
+
+            - *store_fastlane_output
+            - *store_scan_results
+            - *store_snapshot_diffs
 
 There is a YAML feature that I use here to avoid even more repetitions - aliases. This way I extract configurations common for each job:
 
-        - &container_config
-            macos:
-                xcode: "9.4.1"
-            working_directory: /Users/distiller/project
-            shell: /bin/bash --login -eo pipefail
-            environment:
-                LC_ALL: en_US.UTF-8
-                LANG: en_US.UTF-8
-                SCAN_DEVICE: iPhone 5s
-                FL_OUTPUT_DIR: output
-                FASTLANE_XCODEBUILD_SETTINGS_RETRIES: 10
+    - &container_config
+        macos:
+            xcode: "9.4.1"
+        working_directory: /Users/distiller/project
+        shell: /bin/bash --login -eo pipefail
+        environment:
+            LC_ALL: en_US.UTF-8
+            LANG: en_US.UTF-8
+            SCAN_DEVICE: iPhone 5s
+            FL_OUTPUT_DIR: output
+            FASTLANE_XCODEBUILD_SETTINGS_RETRIES: 10
 
 or individual steps, i.e. installing CocoaPods:
 
-        - &cocoapods_cache_key
-            2-pods-{{ checksum "Podfile.lock" }}
-    
-        - &restore_cocoapods_cache
-            restore_cache:
-                key: *cocoapods_cache_key
-    
-        - &pod_install
-            run:
-                name: Pod Install
-                command: |
-                    bundle exec pod --version
-                    diff Podfile.lock Pods/Manifest.lock || curl https://cocoapods-specs.circleci.com/fetch-cocoapods-repo-from-s3.sh | bash -s cf
-                    bundle exec pod install
-    
-        - &save_cocoapods_cache
-            save_cache:
-                key: *cocoapods_cache_key
-                paths:
-                    - Pods
-                    - ~/.cocoapods/repos
+    - &cocoapods_cache_key
+        2-pods-{{ checksum "Podfile.lock" }}
+
+    - &restore_cocoapods_cache
+        restore_cache:
+            key: *cocoapods_cache_key
+
+    - &pod_install
+        run:
+            name: Pod Install
+            command: |
+                bundle exec pod --version
+                diff Podfile.lock Pods/Manifest.lock || curl https://cocoapods-specs.circleci.com/fetch-cocoapods-repo-from-s3.sh | bash -s cf
+                bundle exec pod install
+
+    - &save_cocoapods_cache
+        save_cache:
+            key: *cocoapods_cache_key
+            paths:
+                - Pods
+                - ~/.cocoapods/repos
 
 But YAML aliases don't support arrays, so can't be used to reuse steps definition between jobs.
 
@@ -94,57 +94,57 @@ It was fine in the beginning but when I started to move other jobs from Jenkins 
 
 As I mentioned before YAML aliases support only key-value pairs, not collections. So then we can extract `steps` key-value pair into an alias that we can then include in each job.
 
-        - &fastlane
-            run:
-                name: Fastlane
-                no_output_timeout: 60m
-                command: bundle exec fastlane ???
-    
-        - &base_steps
-            steps:
-                - checkout
-                - *lfs
-                - *brew
-                - *restore_gems_cache
-                - *bundle_install
-                - *save_gems_cache
-                - *restore_cocoapods_cache
-                - *pod_install
-                - *save_cocoapods_cache
-                - *restore_carthage_cache
-    
-                - *fastlane
-    
-                - *store_fastlane_output
-                - *store_scan_results
-                - *store_snapshot_diffs
+    - &fastlane
+        run:
+            name: Fastlane
+            no_output_timeout: 60m
+            command: bundle exec fastlane ???
+
+    - &base_steps
+        steps:
+            - checkout
+            - *lfs
+            - *brew
+            - *restore_gems_cache
+            - *bundle_install
+            - *save_gems_cache
+            - *restore_cocoapods_cache
+            - *pod_install
+            - *save_cocoapods_cache
+            - *restore_carthage_cache
+
+            - *fastlane
+
+            - *store_fastlane_output
+            - *store_scan_results
+            - *store_snapshot_diffs
 
 But that does not allow us to override individual steps, like `fastlane` step here, so that we can perform different build or test commands in different jobs. We can only override all steps or none of them.
 
 But we can use environment variables as parameters for these commands. Using Fastlane (or Rakefile, or Makefile) simplifies that a lot because we only need to set an environment variable with a name of a lane or rake task. And we might not even need it because we can use job name already exposed as environment variable out of the box.
 
-        - &fastlane
-            run:
-                name: Fastlane
-                no_output_timeout: 60m
-                command: bundle exec fastlane ${LANE:-$CIRCLE_JOB}
+    - &fastlane
+        run:
+            name: Fastlane
+            no_output_timeout: 60m
+            command: bundle exec fastlane ${LANE:-$CIRCLE_JOB}
 
 To be able to override/add environment variables we also need to extract `environment` key-value pair into an alias:
 
-        - &env_defaults
-            LC_ALL: en_US.UTF-8
-            LANG: en_US.UTF-8
-            SCAN_DEVICE: iPhone 5s
-            FL_OUTPUT_DIR: output
-            FASTLANE_XCODEBUILD_SETTINGS_RETRIES: 10
-    
-        - &container_config
-            macos:
-                xcode: "9.4.1"
-            working_directory: /Users/distiller/project
-            shell: /bin/bash --login -eo pipefail
-            environment:
-                <<: *env_defaults
+    - &env_defaults
+        LC_ALL: en_US.UTF-8
+        LANG: en_US.UTF-8
+        SCAN_DEVICE: iPhone 5s
+        FL_OUTPUT_DIR: output
+        FASTLANE_XCODEBUILD_SETTINGS_RETRIES: 10
+
+    - &container_config
+        macos:
+            xcode: "9.4.1"
+        working_directory: /Users/distiller/project
+        shell: /bin/bash --login -eo pipefail
+        environment:
+            <<: *env_defaults
 
 And now to define a "parametrized" job we need just a few lines:
 
