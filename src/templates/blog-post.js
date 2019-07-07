@@ -17,7 +17,7 @@ class BlogPostTemplate extends React.Component {
     const tags = post.frontmatter.tags ? post.frontmatter.tags + " |" : ""
 
     return (
-      <Layout location={this.props.location} title={siteTitle}>
+      <Layout location={this.props.location} title="All posts">
         <SEO
           title={post.frontmatter.title}
           description={post.frontmatter.description || post.excerpt}
