@@ -2,13 +2,11 @@
 id: 5c5a181fe50b131c1451e18a
 title: Swift 5 string interpolation
 date: 2019-02-06T19:30:00.000Z
-description: ""
+description: "Strings are everywhere. We all use strings everyday. In Swift `String` is a very powerful type. One of the features it had available since the beginning is the string interpolation. With it we can embed any Swift expression inside the string literal instead of concatenating strings manually."
 tags: ""
 ---
 
 Strings are everywhere. We all use strings everyday. In Swift `String` is a very powerful type. One of the features it had available since the beginning is the string interpolation. With it we can embed any Swift expression inside the string literal instead of concatenating strings manually.
-
-<!-- description -->
 
 ```swift
 let name = "iOS Astronauts"

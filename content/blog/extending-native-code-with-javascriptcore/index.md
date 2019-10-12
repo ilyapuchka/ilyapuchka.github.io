@@ -2,7 +2,7 @@
 id: 5b6f5a3a9d28c70f0f015f81
 title: Extending native code with JavaScriptCore
 date: 2017-02-08T19:01:00.000Z
-description: ""
+description: "This week there were a lot of articles around the web about React Native and its place in a current iOS dev ecosystem. I was also playing with JavaScript lately, but in somewhat different context - JavaScriptCore. JavaScriptCore is a really great way to make your apps extensible by your users. There are some cool live examples of awesome tools leveraging it."
 tags: ""
 ---
 

@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f65
 title: Networking in Swift
 date: 2015-09-10T19:10:13.000Z
-description: ""
+description: "Recently I've updated my post on how you can implement lightweight networking in Objective-C. Now it's time to look at the same problem from perspective of Swift."
 tags: Swift
 ---
 
 Recently I've updated my post on how you can implement lightweight networking in Objective-C. Now it's time to look at the same problem from perspective of Swift. If you want to check out code right away you can do it on [Github](https://github.com/ilyapuchka/SwiftNetworking).
-
-<!-- description -->
 
 As AFNetowrking is the default tool of choice for most of Objective-C developers, [Alamofire](https://github.com/Alamofire/Alamofire) became such in Swift community. But it's always useful to practice and find your own solutions. So let's look how we can do networking by ourselves and what we can achieve there using powerful Swift features like generics, structs and enums.
 

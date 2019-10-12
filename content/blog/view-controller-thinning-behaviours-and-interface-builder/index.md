@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f69
 title: View controller thinning. Behaviors and Interface Builder.
 date: 2015-10-10T15:13:18.000Z
-description: ""
+description: "In previous post I showed how you can move some presentation logic from view controller to view. Now view controller is responsible only for business logic, in this case making login request and handling its result. But now you would say: \"You just moved presentation logic from controller to view. Now you have Massive View!\" And you will be right. Though view is a perfect place for presentation logic that leads to that view should know everything about its subviews and it will probably change when we change something in its subviews. So in this post I will show how to make view a little bit less aware of its subviews details and how to isolate business logic from everything else."
 tags: ""
 ---
 
 In [previous post](http://ilya.puchka.me/view-controller-thinning/) I showed how you can move some presentation logic from view controller to view. Now view controller is responsible only for business logic, in this case making login request and handling its result. But now you would say: "You just moved presentation logic from controller to view. Now you have Massive View!" And you will be right. Though view is a perfect place for presentation logic that leads to that view should know everything about its subviews and it will probably change when we change something in its subviews. So in this post I will show how to make view a little bit less aware of its subviews details and how to isolate business logic from everything else. You can follow commits history in this [repo](https://github.com/ilyapuchka/ViewControllerThinning/commits/master).
-
-<!-- description -->
 
 #### Behaviors
 

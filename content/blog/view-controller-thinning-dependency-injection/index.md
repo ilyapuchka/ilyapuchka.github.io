@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f6a
 title: View controller thinning. Dependency injection with Typhoon.
 date: 2015-10-27T11:56:27.000Z
-description: ""
+description: "In my previous post I described how you can break business and presentation logic in small PONSO's to achieve better separation of concerns and think view controller. To wire up dependencies, particularly those PONSO instances with view elements and actions I heavily used Interface Builder. In this post I will show how you can do the same using IoC-container instead of Interface Builder. As example of such IoC container implementation I will use Typhoon framework. To checkout the full code you can use this repo."
 tags: ""
 ---
 
 In my [previous post](http://ilya.puchka.me/view-controller-thinning-behaviours-and-interface-builder/) I described how you can break business and presentation logic in small PONSO's to achieve better separation of concerns and think view controller. To wire up dependencies, particularly those PONSO instances with view elements and actions I heavily used Interface Builder. In this post I will show how you can do the same using IoC-container instead of Interface Builder. As example of such IoC container implementation I will use [Typhoon](http://www.typhoonframework.org) framework. To checkout the full code you can use [this repo](https://github.com/ilyapuchka/ViewControllerThinning/tree/typhoon).
-
-<!-- description -->
 
 First lets start with defining what _IoC-container_ ("Inversion-Of-Control-Container") is. I will not dive deep in theory of Inversion Of Control principle, you better read about that [somewhere else](http://butunclebob.com/ArticleS.UncleBob.PrinciplesOfOod). IoC-container serves to simplify and automate the process of defining and resolving dependencies between software system components. Basically what IoC-container does is that it provides some API to register components and to resolve them later. Sometimes it can even resolve them for you so you don't even need to call any method to create an instance of your component. Imagine that you have component that depends on lot's of other components:
 

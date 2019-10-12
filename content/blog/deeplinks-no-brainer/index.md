@@ -2,7 +2,7 @@
 id: 5b6f5a3a9d28c70f0f015f84
 title: Deep links with no brainer
 date: 2017-09-06T20:16:00.000Z
-description: ""
+description: "Very often in my practice deep links were something that no one cares much, they work somehow and its fine. Or there are just few of them and its really not hard to maintain. But working for a long time on one product that targets several very different markets reveals all the importance of deep links in a long run. There are always requests from marketing teams to support new kind of deep link for a new marketing campaign, to open some new screen in the app from push notification, or with some specific parameters, when existing deep link can't be reused for what ever reason and you have to create yet another one for the same action. In the modern app there are also all kinds of different sources of urls that should act like a deep link to your app - universal links, push notifications, shortcut items etc."
 tags: iOS, Swift, Architecture
 ---
 

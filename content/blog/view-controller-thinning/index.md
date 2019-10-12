@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f67
 title: View controller thinning
 date: 2015-09-26T17:51:00.000Z
-description: ""
+description: "\"Massive view controller\" is one of the most favorite topic for iOS developers when they talk about architecture. A lot have been said on this topic already, even more will be said in future cause unfortunately there is no silver bullet and view controller still stay massive in many projects. Recently Andy Matuschak presented here and there a live coding session on this topic. So you can see it's a well know and still actual problem."
 tags: ""
 ---
 
 "Massive view controller" is one of the most favorite topic for iOS developers when they talk about architecture. A lot have been said on this topic already, even more will be said in future cause unfortunately there is no silver bullet and view controller still stay massive in many projects. Recently Andy Matuschak presented [here](https://realm.io/news/andy-matuschak-refactor-mega-controller/) and [there](https://vimeo.com/140037432) a live coding session on this topic. So you can see it's a well know and still actual problem.
-
-<!-- description -->
 
 The real problem is that there are a lot of responsibility in UIViewController already defined in UIKit. So why to add even more? We should try to minimize view controller responsibility as much as any other class in our application. Apple have made view controller the hart of each iOS application so we should respect them and treat them with the same care as our model, network or persistence layer. But instead we centralize all our code in view controllers.
 

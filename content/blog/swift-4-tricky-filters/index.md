@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f85
 title: Swift 4 tricky filters
 date: 2017-09-26T07:46:10.000Z
-description: ""
+description: "This is a short story of a regression in Swift 4 that I've recently had to deal with. It can seem as a simple problem, but I think it's a good example of unexpected regression caused by a positive change in a language standard library."
 tags: ""
 ---
 
 This is a short story of a regression in Swift 4 that I've recently had to deal with. It can seem as a simple problem, but I think it's a good example of unexpected regression caused by a positive change in a language standard library.
-
-<!-- description -->
 
 First - a bit of a context. In my current project we extensively use [Eureka](http://github.com/xmartlabs/Eureka) framework to build forms. Most of the time values in our forms are selected from a list of options. For this purpose Eureka has a special type of section - `SelectableSectionType`. There is also a base class `Section` that represents a collection of rows. To make working with rows and sections easier this type implements protocols that allow us to work with it as with a collection of rows, like if it was a plain array. One of these protocols is `RangeReplaceableCollection` which simplifies inserting and removing rows from the section. I would not describe here all the machinery behind it but I will show some parts of this implementation to showcase the issue.
 

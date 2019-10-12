@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f82
 title: Xcode Source Editor Extension superpowered with SourceKitten
 date: 2017-02-19T20:23:16.000Z
-description: ""
+description: "With Xcode 8 Apple finally provided developers with first party API to develop plugin-like Xcode extensions, at the same time closing all the doors for in-process plugins. At this moment unfortunately we are provided with a very limited tools. We can only manipulate the content of currently selected file, have no (official) access to any project metadata and other sources. There are also no first-party tools for code analysis, so we have to parse the code manually. Luckily thanks to OSS community we have such projects as SourceKitten that fills this gap and gives us some foundation to build cool stuff on top of it. Usually though it's used as a framework as part of other tools, usually command line tools that are supposed to be run from a build step of your project, not in source editor extension. Is it even possible to use SourceKitten in Xcode extension? Let's try."
 tags: ""
 ---
 
 With Xcode 8 Apple finally provided developers with first party API to develop plugin-like Xcode extensions, at the same time closing all the doors for in-process plugins. At this moment unfortunately we are provided with a very limited tools. We can only manipulate the content of currently selected file, have no (official) access to any project metadata and other sources. There are also no first-party tools for code analysis, so we have to parse the code manually. Luckily thanks to OSS community we have such projects as SourceKitten that fills this gap and gives us some foundation to build cool stuff on top of it. Usually though it's used as a framework as part of other tools, usually command line tools that are supposed to be run from a build step of your project, not in source editor extension. Is it even possible to use SourceKitten in Xcode extension? Let's try.
-
-<!-- description -->
 
 We go and create an Xcode source editor extension, link it with SourceKittenFramework and its dependencies, write some boilerplate implementation of extension command that uses one of SourceKitten APIs, like `Structure`. We run our extension and... we see in the console: `xcrun: error: cannot be used within an App Sandbox.`
 

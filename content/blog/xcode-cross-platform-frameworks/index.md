@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f79
 title: Xcode & cross-platform frameworks
 date: 2016-08-18T01:47:37.000Z
-description: ""
+description: "Recently I came across an article by Max Howell describing how he had setup PromiseKit project to use just a single target instead of a separate target for each platform. As I have a side-project framework I'm working on I was interested to try this setup. Here is what I've found out."
 tags: ""
 ---
 
 Recently I came across an [article](http://promisekit.org/news/2016/08/Multiplatform-Single-Scheme-Xcode-Projects/) by [Max Howell](https://twitter.com/mxcl) describing how he had setup PromiseKit project to use just a single target instead of a separate target for each platform. As I have a side-project framework I'm working on I was interested to try this setup. Here is what I've found out.
-
-<!-- description -->
 
 In general there is nothing special in the setup and it works both in Xcode 7 and Xcode 8.
 

@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f68
 title: View themes
 date: 2015-10-03T15:23:35.000Z
-description: ""
+description: "In my previous post you could see that I've used `ColorTheme` and `ThemedView` protocol to easily customize view appearance. Though that solution works I was not satisfied with it from very beginning. Here I try to find another solution."
 tags: ""
 ---
 
 In my [previous post](http://ilya.puchka.me/view-controller-thinning/) you could see that I've used `ColorTheme` and `ThemedView` protocol to easily customize view appearance. Though that solution works I was not satisfied with it from very beginning. Here I try to find another solution.
-
-<!-- description -->
 
 What I really didn't like about my that solution was a check of tag type (`if let tag = tag as? FormTextField.ThemeColorTag`). Usually I try to avoid any kind of type checking. But here I have nothing to do but to check the type of tag.
 

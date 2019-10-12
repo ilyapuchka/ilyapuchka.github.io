@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f74
 title: Dependency Injection (DI) in Swift
 date: 2016-05-28T18:24:56.000Z
-description: ""
+description: "This post is a script of the talk that I've made on UIKonf'16. That was a first time for me to present on such a big conference and honestly I'm not even close to a public speaker so you may enjoy just reading it more."
 tags: Swift, Dependency Injection
 ---
 
 This post is a script of the talk that I've made on [UIKonf'16](http://www.uikonf.com). That was a first time for me to present on such a big conference and honestly I'm not even close to a public speaker so you may enjoy just reading it more. Anyway here is the video. And slides are [here](https://speakerdeck.com/ilyapuchka/dependency-injection-in-swift).
-
-<!-- description -->
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/Jg5MvmR3TtM?list=PLdr22uU_wISqm9QbnczWxXs9qyuWpSU4k" frameborder="0" allowfullscreen></iframe>
 

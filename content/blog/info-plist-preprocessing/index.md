@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f5d
 title: Info.plist preprocessing
 date: 2014-12-13T21:13:19.000Z
-description: ""
+description: "This is quiet interesting XCode feature I was not aware of until last week. Maybe you will find it not so interesting and definitely will not use this on everyday basis but sometimes it can be helpfull. For example it can be convenient for separation of production and test configurations (some of them)."
 tags: ""
 ---
 
 This is quiet interesting XCode feature I was not aware of until last week. Maybe you will find it not so interesting and definitely will not use this on everyday basis but sometimes it can be helpfull. For example it can be convenient for separation of production and test configurations (some of them).
-
-<!-- description -->
 
 In project Build settings you can find section called _"Packaging"_ and there are several keys we are interested in:
 

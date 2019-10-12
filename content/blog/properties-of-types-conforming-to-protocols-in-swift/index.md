@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f6e
 title: Properties of types conforming to protocols in Swift
 date: 2015-12-25T12:21:20.000Z
-description: ""
+description: "In Objective-C it's very natural to have a property of type that also conforms to one or few protocols. In Swift that becomes tedious cause you can not simply combine types and protocols."
 tags: ""
 ---
 
 In Objective-C it's very natural to have a property of type that also conforms to one or few protocols. In Swift that becomes tedious cause you can not simply combine types and protocols.
-
-<!-- description -->
 
 You can use generics:
 

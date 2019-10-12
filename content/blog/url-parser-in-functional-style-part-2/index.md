@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f87
 title: URL parser in functional style. Part 2.
 date: 2017-11-07T19:56:44.000Z
-description: ""
+description: "In previous part we started to write base components of URL parser. Time to extend it and add some additional functionality, like conditional, optional and wildcard patterns."
 tags: ""
 ---
 
 [In previous part](http://ilya.puchka.me/url-parser-in-swift-functional-style-part-1/) we started to write base components of URL parser. Time to extend it and add some additional functionality, like conditional, optional and wildcard patterns.
-
-<!-- description -->
 
 #### Conditional pattern
 

@@ -2,13 +2,11 @@
 id: 5ca0c61ee50b131c1451e27f
 title: Making Slack, CircleCI and Fastlane work together
 date: 2019-06-08T14:00:48.000Z
-description: ""
+description: "Nowadays Slack, some kind of CI and often Fastlane are default tools in a toolset of iOS developers. These tools serve their own purposes well, but wouldn't they do it better when they all work together? In this tutorial, I'll describe how to connect Slack with CircleCI and Fastlane. I'll be using CircleCI as an example but it's pretty much the same with any modern CI solution. As a bonus, we will do that in Swift using Vapor 3.0. So this tutorial can be as well an introduction to Swift on the server with Vapor framework."
 tags: ""
 ---
 
 Nowadays Slack, some kind of CI and often Fastlane are default tools in a toolset of iOS developers. These tools serve their own purposes well, but wouldn't they do it better when they all work together? In this tutorial, I'll describe how to connect Slack with CircleCI and Fastlane. I'll be using CircleCI as an example but it's pretty much the same with any modern CI solution. As a bonus, we will do that in Swift using Vapor 3.0. So this tutorial can be as well an introduction to Swift on the server with Vapor framework.
-
-<!-- description -->
 
 ## Running Fastlane on CI
 

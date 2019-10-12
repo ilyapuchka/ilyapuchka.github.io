@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f5c
 title: iOS storyboards segregation
 date: 2014-12-08T00:07:57.000Z
-description: ""
+description: "Recently here at Rambler&Co mobile team we decided to try technique of storyboards segregation (separation in other words). We came to the conclusion that this simple technique together with other techniques we use can help us to improve our's projects architecture, code readability and stability. Here is what we came up with."
 tags: ""
 ---
 
 Recently here at Rambler&Co mobile team we decided to try technique of storyboards segregation (separation in other words). We came to the conclusion that this simple technique together with other techniques we use can help us to improve our's projects architecture, code readability and stability. Here is what we came up with.
-
-<!-- description -->
 
 Many techniques of applications development are based on [user stories](http://en.wikipedia.org/wiki/User_story) (or [use cases](http://en.wikipedia.org/wiki/Use_case)), in short - small logically connected pieces of functionality that application provides to user. Developers too also use the term of 'use cases' in application architecture design. So why not to use this concept to devide one massive storyboard in smaller pieces?
 

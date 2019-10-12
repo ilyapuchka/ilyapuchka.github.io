@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f7a
 title: Frameworks, Keychain, NSCoding and Swift
 date: 2016-09-30T08:30:00.000Z
-description: ""
+description: "One of the strategies that we use at HelloFresh to reduce compile time, improve code reuse and overall codebase health is breaking our code into frameworks. We've started with two core layers - domain and network. We broke these layers into four different frameworks: domain, generic API client, implementation of API client based on Alamofire and endpoints containing collections of requests that we can make to our API. Simply breaking these layers into frameworks already gave us a lot - it was easier to concentrate on particular parts of the code, define seams between them, cover them with tests and finally replace horrible legacy code that already started to bite us in the ass as we were moving forward with new features. And after few weeks when we started to work on the app extension we were able to reuse those frameworks."
 tags: ""
 ---
 
 One of the strategies that we use at HelloFresh to reduce compile time, improve code reuse and overall codebase health is breaking our code into frameworks. We've started with two core layers - domain and network. We broke these layers into four different frameworks: domain, generic API client, implementation of API client based on Alamofire and endpoints containing collections of requests that we can make to our API. Simply breaking these layers into frameworks already gave us a lot - it was easier to concentrate on particular parts of the code, define seams between them, cover them with tests and finally replace horrible legacy code that already started to bite us in the ass as we were moving forward with new features. And after few weeks when we started to work on the app extension we were able to reuse those frameworks.
-
-<!-- description -->
 
 While we were continuing to write tests we also had to extract some shared tests functionality into a separate framework, containing some custom asserts and helper methods. Some of them were depending on types defined in the domain framework. That created situation that we could not use those helpers in domain framework tests, because it would create a circular reference. At the same time we noticed that we need to reuse some other parts of our codebase, in particular date formatters which were used both in the UI and in the API layer. We could put them in the domain framework (and that is what we did at first), but we did't feel that this code really belongs to that layer. So we decided to create _foundation_ framework and extract everything except actual domain models from domain framework - JSON serialization helpers, custom calendar and bunch of other very basic stuff. At the same time I decided to merge all API related frameworks into one, following [package principles](https://en.wikipedia.org/wiki/Package_principles).
 

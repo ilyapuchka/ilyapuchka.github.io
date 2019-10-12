@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f62
 title: Swift 2. Part 1.
 date: 2015-06-28T11:49:34.000Z
-description: ""
+description: "This year I was lucky enougth to go to WWDC as part of Wire team. For me the most exciting stuff Apple introduced this year was Swift 2. I went almost to every session about programming languages, ignoring watchOS sessions and games completely. Though the main inspiration I've got from WWDC was to learn game development using Apple tools, like new GameKit. But that's not the point of this post."
 tags: Swift
 ---
 
 This year I was lucky enougth to go to [WWDC](https://developer.apple.com/wwdc/) as part of [Wire](http://www.wire.com) team. For me the most exciting stuff Apple introduced this year was Swift 2. I went almost to every session about programming languages, ignoring watchOS sessions and games completely. Though the main inspiration I've got from WWDC was to learn game development using Apple tools, like new GameKit. But that's not the point of this post.
-
-<!-- description -->
 
 After comming back from WWDC we had a tech talk at Wire and talked with our colleagues about the conference. I've presented about Swift and Objective-C and here is what I've talked about. Some topics are too big to inculed them in one post, so I've decided to break it in several parts.
 

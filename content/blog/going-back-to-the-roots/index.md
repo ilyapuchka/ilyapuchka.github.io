@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f80
 title: Going back to the roots
 date: 2017-02-02T09:58:19.000Z
-description: ""
+description: "As Roy Marmelstein said in his recent presentation at dotSwift - we love to be excited. Can not agree more. When we read a blog post that describes the concept or architectural pattern that is somewhat new for us and feels exciting we tend to accept it as something good. We can go really far away this rote and sometimes we don't notice that we already have all the tools to solve the problems they address. For iOS developers this tool is a framework that we inevitably use every day - UIKit."
 tags: ""
 ---
 
-As [Roy Marmelstein](https://twitter.com/marmelroy) said in his recent presentation at [dotSwift](https://twitter.com/dotSwift) - "We love to be excited". Can not agree more. When we read a blog post that describes the concept or architectural pattern that is somewhat new for us and feels exciting we tend to accept it as something good. We can go really far away this rote and sometimes we don't notice that we already have all the tools to solve the problems they address. For iOS developers this tool is a framework that we inevitably use every day - UIKit.
-
-<!-- description -->
+As [Roy Marmelstein](https://twitter.com/marmelroy) said in his recent presentation at [dotSwift](https://twitter.com/dotSwift) - we love to be excited. Can not agree more. When we read a blog post that describes the concept or architectural pattern that is somewhat new for us and feels exciting we tend to accept it as something good. We can go really far away this rote and sometimes we don't notice that we already have all the tools to solve the problems they address. For iOS developers this tool is a framework that we inevitably use every day - UIKit.
 
 That's what I was thinking about in the breaks at dotSwift. It started to bug me after I watched yet another presentation about [coordinators](http://khanlou.com/2015/01/the-coordinator/) the night before. Not saying that this is a misleading concept (it's really not) let's think how can we do the same using what UIKit had for ages.
 

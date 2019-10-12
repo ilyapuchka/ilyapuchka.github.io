@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f61
 title: Swift interesting features
 date: 2015-04-19T12:05:41.000Z
-description: ""
+description: "or What Swift Language Guide do not tell you."
 tags: Swift
 ---
 
 or What Swift Language Guide do not tell you.
-
-<!-- description -->
 
 This post contains the list of interesting features of Swift that I find while using it. To make it more interactive I've put it in a playground that you can checkout [here](https://github.com/ilyapuchka/SwiftFeatures). The list is intended to be updated in future. If you have something you want to share, pull requests are welcome.
 

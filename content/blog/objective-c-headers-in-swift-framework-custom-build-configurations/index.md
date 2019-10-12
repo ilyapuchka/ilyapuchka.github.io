@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f7c
 title: Objective-C headers in Swift framework & custom build configurations
 date: 2016-10-29T13:45:54.000Z
-description: ""
+description: "It's already 2 years of Swift and its interoperability with Objective-C as well. When app extensions were released we've got a way to share our code across targets using frameworks. I used to build lots of frameworks since then, sometimes I even worked full-time just on frameworks. But as I had written almost none of Objective-C in around a year now and I've never dived deep enough in Swift and Objective-C interoperability in frameworks here is the lesson I had to learn hard this time."
 tags: ""
 ---
 
 It's already 2 years of Swift and its interoperability with Objective-C as well. When app extensions were released we've got a way to share our code across targets using frameworks. I used to build lots of frameworks since then, sometimes I even worked full-time just on frameworks. But as I had written almost none of Objective-C in around a year now and I've never dived deep enough in Swift and Objective-C interoperability in frameworks here is the lesson I had to learn hard this time.
-
-<!-- description -->
 
 ### Setup
 

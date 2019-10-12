@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f5f
 title: Lightweight networking in Objective-C
 date: 2015-08-15T19:18:00.000Z
-description: ""
+description: "AFNetworking is the most popular networking library for iOS. Chances are high that it's the first pod you add to your Podfile. It's used as a standalone network layer and as a part of some other frameworks, like RestKit. For me it has earned it's popularity for few reasons. It's well maintained, what is very important for open source project (thought it still has long living issues). And it has well thought architecture and interface, so it is easy to use and extend to your needs."
 tags: ""
 ---
 
 [AFNetworking](https://github.com/AFNetworking/AFNetworking) is the most popular networking library for iOS. Chances are high that it's the first pod you add to your Podfile. It's used as a standalone network layer and as a part of some other frameworks, like [RestKit](https://github.com/RestKit/RestKit). For me it has earned it's popularity for few reasons. It's well maintained, what is very important for open source project (thought it still has long living issues). And it has well thought architecture and interface, so it is easy to use and extend to your needs.
-
-<!-- description -->
 
 When we perform a request using AFNetworking we can receive serialized JSON object, either dictionary or array. And we can work with it right away. But we can do better. It's much better to work not with dictionaries and arrays but our own business objects. RestKit does this job but I find it's interface quiet complex (besides that it still uses 1.x version of AFNetworking and adds it's own bugs) and never used and never will use it in my projects. So let's see how we can improve our networking code ourselves with very little effort and without using AFNetworking at all. You can download full project on [GitHub](https://github.com/ilyapuchka/LightweightNetworking-ObjC).
 

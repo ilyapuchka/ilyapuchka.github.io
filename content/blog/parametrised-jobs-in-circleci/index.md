@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f89
 title: Parameterized jobs in CircleCI
 date: 2018-08-07T18:41:12.000Z
-description: ""
+description: "The title is a lie - there is no such thing as parameterized jobs (at the time of writing, but seems it’s going to be improved in 2.1) when we are talking about CircleCI 2.0 workflows, which are (almost) awesome by the way. But with some tricks, we can achieve something close to that."
 tags: ""
 ---
 
 The title is a lie - there is no such thing as parameterized jobs (at the time of writing, but seems it’s going to be improved in [2.1](https://github.com/CircleCI-Public/config-preview-sdk/blob/master/docs/whats-new.md)) when we are talking about CircleCI 2.0 workflows, which are (almost) awesome by the way. But with some tricks, we can achieve something close to that.
-
-<!-- description -->
 
 Here is the problem. Let's say we have a bunch of jobs which are exactly the same except what build or test command they invoke in the end. They all need to perform the same sequence of actions:
 

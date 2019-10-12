@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f73
 title: Mixing optional binding and boolean expressions
 date: 2016-04-28T21:11:07.000Z
-description: ""
+description: "There were few times already when I used this little-known feature of Swift in real code and it improved (in my opinion) readability a lot and much better described the intention of the code."
 tags: Swift
 ---
 
 There were few times already when I used this little-known feature of Swift in real code and it improved (in my opinion) readability a lot and much better described the intention of the code.
-
-<!-- description -->
 
 Here is the original code from the real app:
 

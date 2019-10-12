@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f83
 title: Swift enums with associated values defaults
 date: 2017-03-24T10:01:21.000Z
-description: ""
+description: "In Swift enums are much more powerful than we got used to in other languages. One of the features that makes them more interesting to use is associated values - values that each instance of enum case can carry along with it. We can not have stored properties in the enum, so associated values is basically the only way to store additional data with enum value. Creating an enum value with associated value has a similar semantics as a method call. The difference is - we can not define defaults for parameters which represent associated values."
 tags: ""
 ---
 
 In Swift enums are much more powerful than we got used to in other languages. One of the features that makes them more interesting to use is associated values - values that each instance of enum case can carry along with it. We can not have stored properties in the enum, so associated values is basically the only way to store additional data with enum value. Creating an enum value with associated value has a similar semantics as a method call. The difference is - we can not define defaults for parameters which represent associated values.
-
-<!-- description -->
 
 Here is a real-life example. I was implementing a custom popover presentation for which I have a relative position, view to present popover from and an inset from it along with several other parameters. First I had all of these properties defined as a separate method parameters:
 

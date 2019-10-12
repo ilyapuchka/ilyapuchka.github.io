@@ -36,7 +36,7 @@ class BlogIndex extends React.Component {
               </p>
               <p
                 dangerouslySetInnerHTML={{
-                  __html: node.frontmatter.description || node.html.split("<!-- description -->")[0] || node.excerpt,
+                  __html: node.frontmatter.description || node.excerpt,
                 }}
               />
             </div>
@@ -65,8 +65,7 @@ export const pageQuery = graphql`
     allMarkdownRemark(sort: { fields: [frontmatter___date], order: DESC }) {
       edges {
         node {
-          excerpt(format: HTML)
-          html
+          excerpt
           fields {
             slug
           }

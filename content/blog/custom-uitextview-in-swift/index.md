@@ -2,7 +2,7 @@
 id: 5b6f5a3a9d28c70f0f015f60
 title: Custom UITextView in Swift
 date: 2015-04-04T14:30:00.000Z
-description: ""
+description: "In this article I want to describe how I developed custom UITextView component in Swift using TextKit, Playgrounds and IBDesignable and IBInspectable directives."
 tags: iOS
 ---
 

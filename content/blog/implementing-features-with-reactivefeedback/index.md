@@ -2,13 +2,11 @@
 id: 5bc1e57cfbb5c40cecb2c8a6
 title: Implementing features with ReactiveFeedback
 date: 2018-11-07T13:40:24.000Z
-description: ""
+description: "Some time ago there was an explosion of articles and talks in the iOS community about \"unidirectional flow\" architectures, inspired by Redux library from JavaScript. The dust has settled since then but as a result of this storm, we now have ReSwift and other implementations of this approach. Reactive programming adepts didn't stay away for long and came up with RxFeedback. At Babylon, we use ReactiveCocoa so we've built ReactiveFeedback. In this article, you'll see how we use it to build the whole features in our app, not just increment counters so there will be a lot of code."
 tags: ""
 ---
 
 Some time ago there was an explosion of articles and talks in the iOS community about "unidirectional flow" architectures, inspired by Redux library from JavaScript. The dust has settled since then but as a result of this storm, we now have ReSwift and other implementations of this approach. Reactive programming adepts didn't stay away for long and came up with RxFeedback. At Babylon, we use ReactiveCocoa so we've built [ReactiveFeedback](https://github.com/Babylonpartners/ReactiveFeedback). In this article, you'll see how we use it to build the whole features in our app, not just increment counters so there will be a lot of code (you can see the whole code in this [gist](https://gist.github.com/ilyapuchka/5d9f80d4c79b05fc42e697b90f748799)).
-
-<!-- description -->
 
 One of the differences from what you will see in most of the tutorials about this approach is that we don't have a global application state. We simply don't need it as we build our app from a set of microfeatures, from a bootstrapping state when the user starts the app to the implementation of each and every application flow. Every feature has a clear "entry point" for the rest of the code to interact with it and has it's own state isolated from the rest of the app.
 

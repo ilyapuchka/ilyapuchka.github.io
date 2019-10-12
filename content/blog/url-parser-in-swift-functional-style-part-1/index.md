@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f86
 title: URL parser in functional style. Part 1.
 date: 2017-11-07T19:56:35.000Z
-description: ""
+description: "When I published one of my previous posts about deeplinks and then decided to turn it into a framework it turned out that Brandon Williams was working on a similar thing for his Point-Free project, but related to parsing http requests for web framework. As parsing URLs is a subset of this problem I decided to go through his implementation and apply the same technique to rewrite parser that I have written in imperative way (and probably not in the best way) in a functional style. Just to see where it goes and as exercise in a functional programming. So here is the path I went through."
 tags: ""
 ---
 
 When I published one of my previous [posts about deeplinks](http://ilya.puchka.me/deeplinks-no-brainer/) and then decided to turn it into a [framework](https://github.com/ilyapuchka/Deeper) it turned out that [Brandon Williams](https://twitter.com/mbrandonw) was working on a similar thing for his [Point-Free project](https://github.com/pointfreeco/swift-web/pull/61/files), but related to parsing http requests for web framework. As parsing URLs is a subset of this problem I decided to go through his implementation and apply the same technique to rewrite parser that I have written in imperative way (and probably not in the best way) in a functional style. Just to see where it goes and as exercise in a functional programming. So here is the path I went through.
-
-<!-- description -->
 
 #### Problem
 
