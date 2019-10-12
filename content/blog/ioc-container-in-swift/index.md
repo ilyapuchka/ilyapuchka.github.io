@@ -2,7 +2,7 @@
 id: 5b6f5a3a9d28c70f0f015f6b
 title: IoC container in Swift
 date: 2015-11-08T19:45:22.000Z
-description: ""
+description: "In my previous post I talked about dependency injection framework for Objective-C called Typhoon. It's very easy to start to use it, yet it's very powerful (maybe even too much cause there are so much stuff you can do with it). But I'm here not to advocate Typhoon. It's the end of 2015 and there is Swift. Is there a way to do the same (well there are just too much stuff there in Typhoon so I mean only core IoC container functionality) in Swift way or are we doomed to stick to Objective-C?"
 tags: ""
 ---
 
@@ -173,7 +173,7 @@ func resolve<T>(tag: Tag? = nil) -> T {
         fatalError("No instance factory registered with \(key)") 
     }
     return factory(tag) as! T
-    }
+}
 ```
 
 The magic is how generics and `as` operator work here together. If you don't use `as`:

@@ -14,7 +14,7 @@ One of the differences from what you will see in most of the tutorials about thi
 
 To demonstrate our approach we will build an interface that allows users to make a list of pharmacies where they prefer their medications to be delivered. This is a real feauture that I was working on recently. Here is how the final result will look like:
 
-<video src="/content/images/videos/20181013135820.mov" controls style="width:320px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);"></video>
+<video src="/images/20181013135820.mov" controls style="width:320px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);"></video>
 
 On the screen we are going to implement user will see an empty state placeholder when there are no previously saved pharmacies, will be able to add pharmacies from the map screen, delete previously added pharmacies and finally select a pharmacy for delivery, which will dismiss this screen.
 
@@ -22,23 +22,23 @@ As Redux in its essence is just a state machine we start with defining states an
 
 We start with `loading` state, of course. In case of loading data, in this case, the list of pharmacies previously saved by the user, succeeds we go to `loaded` state, or otherwise in `loading failed` state from where we can go back to `loading` state using `retry` action.
 
-![Basic-State-Diagram-2](/content/images/2018/10/Basic-State-Diagram-2.png)
+![](/images/Basic-State-Diagram-2.png)
 
 From `loaded` state using `add pharmacy` action we go to `searching` state. During this transition, we send `show map` signal to display map user interface. When the user closes the map without selecting any pharmacy we go back to `loaded` state. When the user selects a pharmacy on the map we go to `adding` state. If adding pharmacy succeeds we go to `loaded` state with this pharmacy added, otherwise we go to `failed` state which immediately sends `show error` signal and goes back to `loaded` state.
 
-![Basic-State-Diagram-6](/content/images/2018/10/Basic-State-Diagram-6.png)
+![](/images/Basic-State-Diagram-6.png)
 
 Similarly to this when user deletes pharmacy we go to `deleting` state and if deleting succeeds we go to `loaded` state with this pharmacy deleted from the list, otherwise to `failed` state, send `show error` signal and go back to `loaded` state keeping this pharmacy in the list.
 
-![Basic-State-Diagram-4](/content/images/2018/10/Basic-State-Diagram-4.png)
+![](/images/Basic-State-Diagram-4.png)
 
 Finally, when the user selects pharmacy from the list we can either exit the flow and return selected pharmacy to the caller through `dismissing` state and `dismiss` signal, or we can display directions to the selected pharmacy which will send `show map` signal and then go to `showing directions` state. When the user closes the map we go back to `loaded` state.
 
-![Basic-State-Diagram-7](/content/images/2018/10/Basic-State-Diagram-7.png)
+![](/images/Basic-State-Diagram-7.png)
 
 Here is the final diagram. It looks a bit complicated but when you break it down into pieces like we just did it becomes pretty simple to understand.
 
-![Basic-State-Diagram-5](/content/images/2018/10/Basic-State-Diagram-5.png)
+![](/images/Basic-State-Diagram-5.png)
 
 Now let's implement it!
 

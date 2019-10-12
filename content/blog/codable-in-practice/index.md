@@ -22,9 +22,7 @@ Another less common but still possible case is when you deal at the same time wi
 
 #### Single or few properties require custom decoding/encoding.
 
-In case you only need to transform some keys and all is fine with your data types, i.e. numbers always come as numbers and not as strings, having custom `CodingKeys` may be just enough for you. But if you have at least one property that you have to decode or encode manually you will have to do that for all the properties. And even if all is fine with your keys and you only need custom decoding, you will have to define all the keys too as complier will not let you to use decoder with keys type which is not defined anywhere\*. Meaning that automatic synthesis of Codable implementation is useless in this case and you can end up with twice as much code to write as number of properties in your type.
-
-> \* This will not be the case if you let compiler to generate implementation for one of `Decodable` or `Encodable` protocols when you are conforming to `Codable`. But if you provide manually implementation for both of them or when you conform only to one of them and provide manual implementation for it - compiler will not generate CodingKeys type for you.
+In case you only need to transform some keys and all is fine with your data types, i.e. numbers always come as numbers and not as strings, having custom `CodingKeys` may be just enough for you. But if you have at least one property that you have to decode or encode manually you will have to do that for all the properties. And even if all is fine with your keys and you only need custom decoding, you will have to define all the keys too as complier will not let you to use decoder with keys type which is not defined anywhere[^*]. Meaning that automatic synthesis of Codable implementation is useless in this case and you can end up with twice as much code to write as number of properties in your type.
 
 The best way to make it still work is to introduce intermediate wrapper types which will handle this custom decoding/decoding implementations. This though can cause unexpected changes across your code base and can make working with your models harder when you need to access these wrapped values. To mitigate the negative effect of this your can introduce computed properties which will take care of unwrapping, but you'll need a different name for such properties, so the problem of unneeded changes does not go away. You can instead change the name of a wrapper property, i.e. prefix it with underscore, and use a custom key strategy which will drop it for all the keys.
 
@@ -288,3 +286,6 @@ There are drawbacks of course too:
 #### Conclusion
 
 `Codable` as a feature was by now well accepted by community and made life of Swift developers much easier, but it still does not solve all the issues we have to deal with in real-life projects. There are multiple ways how you can solve them by writing your code in a specific ways. And tools like Sourcery which will help you to write even less code.
+
+[^*]: This will not be the case if you let compiler to generate implementation for one of `Decodable` or `Encodable` protocols when you are conforming to `Codable`. But if you provide manually implementation for both of them or when you conform only to one of them and provide manual implementation for it - compiler will not generate CodingKeys type for you.
+

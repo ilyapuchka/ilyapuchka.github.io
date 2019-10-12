@@ -1,6 +1,6 @@
 ---
 id: 5b6f5a3a9d28c70f0f015f6a
-title: View controller thinning. Dependency injection.
+title: View controller thinning. Dependency injection with Typhoon.
 date: 2015-10-27T11:56:27.000Z
 description: ""
 tags: ""
@@ -25,6 +25,8 @@ let apiClient: ApiClient = networkComponents.resolve()
 You can easily use _Dependency Injection_ pattern without any containers in relatively small systems but when number of components in your system grows so the number of dependencies grows and at some point you will end up with a lot of code that just wires things together. This setup logic can be scattered over you code. Instead you should aim to concentrate setup in one point. Basically it would be the earliest entry point of you program. Speaking of iOS app you can think of your app delegate. This is not perfect solution though. In large system you will have app delegate bloated with setup of different components. Also sometimes it's not possible or not efficient to define all dependencies at startup. You may need to decide what components to use at runtime depending on the state of your system or user input. This is when IoC-container will be very handy.
 
 So let's look at Typhoon, so far the best IoC-container for Cocoa.
+
+#### Typhoon
 
 The way you use it is that you define _assemblies_ that provide _definitions_ for your system components. Definitions define the type of component they describe and how it will be created at runtime - what initializer will be used, what properties will be injected during resolution process and what methods will be called. You can think of assemblies as classes that provide factory methods for your components. But instead of manually creating components that factory methods return definitions for this components that Typhoon use later to create real components. What makes Typhoon even better is that you can seamlessly integrate it step by step in your application. You don't have to make you system Typhoon-centric and strongly depend on it. Also it works great with storyboards so it's very easy to start inject things. In runtime Typhoon will detect types of view controllers and inject their dependencies if you provide appropriate definitions.
 
@@ -122,7 +124,9 @@ def.useInitializer("initWithAPIClient:") { method in
 
 For that there is a mechanism in Typhoon called collaborating assemblies. To use it I can define a property of another assembly on UI components assembly.
 
-    private(set) var networkComponents: NetworkComponents!
+```swift
+private(set) var networkComponents: NetworkComponents!
+```
 
 When Typhoon will initialize UI components assembly it will inspect its properties and search for those that are subclasses of `TyphoonAssembly`. When it finds one it will search for assembly that it can inject in this property. So now I need to define assembly for network components:
 

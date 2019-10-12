@@ -16,7 +16,7 @@ In this component we will add "read more" behaviour to text view. It will have t
 
 As I said earlier we will develop this component directly in Swift Playgroud. In Playgrouds we can render any view in Assistant Editor with help of XCPlayground module and it's XCPShowView function. To make it work we need to open playground's File Inspector (⌥-⌘-1). In File Inspector in Playground Settings we should check "Run in Full Simulator". Now hide File Inspector (⌥-⌘-0) and open Assistant Editor (⌥-⌘-⏎).
 
-![](/content/images/2015/Apr/checkmark.png)
+![](images/checkmark.png)
 
 Recently I wrote [a small overview](http://ilya.puchka.me/quick-overview-of-swift-playgrounds-in-ios-simulator/%22) about using this feature of playgrounds.
 
@@ -47,7 +47,7 @@ XCPShowView("view", createView())
 
 Here is what you should see:
 
-![](/content/images/2015/Apr/Assistant-Editor.png)
+![](images/Assistant-Editor.png)
 
 #### Component's interface
 
@@ -296,12 +296,12 @@ func createView(textView: UITextView) -> UIView {
 
 Though we've done everything we need to make our text view work properly if you look now in Assistant Editor you will probably see something like this:
 
-![](/content/images/2015/Apr/UITextView-bug.png)
+![](images/UITextView-bug.png)
 
 This is defenetly not what we want. It turns out that to fix that we need to disable scrolling and editing in our text view.  
 Now everything should work as expected and you should see something like this:
 
-![](/content/images/2015/Apr/TextView.png)
+![](images/TextView.png)
 
 #### Handling taps
 

@@ -55,17 +55,19 @@ So let's start with the first step. There are few patterns how we can pass depen
 
 Let's see how they look like using examples from Cocoa frameworks.
 
-##### Constructor injection
+#### Constructor injection
 
 Here is an example of constructor injection from CoreData:
 
 ```swift
 class NSPersistentStore : NSObject {
 
-    init(persistentStoreCoordinator root: NSPersistentStoreCoordinator?, 
+    init(
+        persistentStoreCoordinator root: NSPersistentStoreCoordinator?, 
         configurationName name: String?, 
         URL url: NSURL, 
-        options: [NSObject: AnyObject]?)
+        options: [NSObject: AnyObject]?
+    )
         
     var persistentStoreCoordinator: NSPersistentStoreCoordinator? { get }
     
@@ -80,7 +82,7 @@ Though there are not so many examples of constructor injection in Cocoa framewor
 
 But there are cases when constructor injection is not possible or does not fit well. In these cases we should use property injection.
 
-##### Property injection
+#### Property injection
 
 This pattern is all over the place in any iOS application. For example delegate pattern is often implemented using property injection.
 
@@ -96,7 +98,7 @@ Here for example view controller exposes writable property for transitioning del
 
 > With property injection consumer gets its dependency through writable property that also has some default value.
 
-###### Local & foreign defaults
+#### Local & foreign defaults
 
 Property injection should be used when there is a good _local_ default for dependency. _"Local"_ means that it is defined in the same module. `nil` is also a perfect local default, it just makes dependency optional.
 
@@ -108,7 +110,7 @@ Comparing with constructor injection property injection is maybe easier to under
 
 First of all we need to have some default implementation in place or handle optional value in a proper way which can lead to cluttering code with unwrapping optionals. Secondly, we can not define our property as immutable. So if we don't want to allow to change it once it was set we will need to ensure that at runtime instead of compile time. Also we may need to synchronise access to it to prevent threading issues. For these reasons if we can use constructor injection we should prefer it to property injection.
 
-##### Method injection
+#### Method injection
 
 Next pattern, method injection, is as simple as passing argument to a method. For example here is `NSCoding` protocol:
 
@@ -126,7 +128,7 @@ Each time the method is called different instance and even implementation of `NS
 
 Method injection is usually used when dependency can vary with each method call or when dependency is temporal and it is not required to keep reference to it outside of a method scope.
 
-##### Ambient context
+#### Ambient context
 
 The last pattern - ambient context - is hard to find in Cocoa. Probably `NSURLCache` is the most close example.
 
@@ -150,7 +152,7 @@ Ambient context has its own advantages. It makes dependency always accessible an
 
 So if the dependency is not truly universal first we should consider using other DI patterns.
 
-##### Separation of concerns
+#### Separation of concerns
 
 As you may notice all these patterns are very simple and they share one common principle - separation of concerns. We remove several responsibilities from the consumer of dependency: what concrete implementation to use, how to configure it and how to manage its lifetime. This lets us easily substitute dependency in different context or in tests, change its lifetime strategy, for instance use shared or separate instances, or to change the way how the dependency is constructed. All without changing its consumers. That makes concumers decoupled with their dependencies, making them easier to reuse, extend, develop and test.
 
@@ -160,7 +162,7 @@ The obvious side effect of these patterns is that now every user of our code nee
 
 Composition Root is a place where components from different layers of the application are wired together. The main point of having composition root is to separate configuration logic from the rest of our code, do it in a well defined place in a common manner. Having a piece of code which single responsobility is to configure other components. Creating dependencies and injecting them in constructors or properties should be done only in the Composition Root.
 
-![](/content/images/2016/05/composition_root.png) <sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>
+![](/images/composition_root.png) <sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>
 
 Ideally there should be one Composition Root in the application and it should be close to application entry point. Like on this diagram. But it does not have to be implemented with a single method or a class. It can contain as many classes and methods as needed until they stay together at the same layer of components.
 
@@ -224,7 +226,7 @@ Unfortunatelly Composition Root is usually not discussed in articles or talks ab
 
 But as it often happens while we are trying to properly implement some patterns we can easily end up with anti-patterns. So, now let's move on to the dark side and see what are the common DI anti-patterns.
 
-##### Control freak
+#### Control freak
 
 The first one is control freak. That is simply when we don't use DI at all. When consumer of dependency controls how and when the dependency is created. It happens every time when consumer gets a dependency directly or indirectly using constructor anywhere outside Composition Root. For example in its own constructor or just when it needs it.
 
@@ -241,7 +243,7 @@ class RecipesService {
 
 But does that mean that we are not allowed to use constructors at all? Of course not. It depends on what kind of dependency we construct.
 
-###### Stable & volatile dependencies
+#### Stable & volatile dependencies
 
 There are two kinds of them - stable and volatile. When it comes to stable dependencies we should not worry about constructing them directly inside their consumer. But we should avoid doing that for volatile dependencies.
 
@@ -251,7 +253,7 @@ The symptom of volatile dependencies is that they disable some of loose coupling
 
 So first of all we need to understand if the dependency is volatile or stable and inject it with Dependency Injection patterns when it is volatile.
 
-##### Bastard injection
+#### Bastard injection
 
 The next anti-pattern is called Bastard injection. That happens when we have constructor that lets us provide dependencies for tests and another constructor with default implementations used in production. In Swift we can do that easily with default arguments like in the following example.
 
@@ -268,7 +270,7 @@ class RecipesService {
 
 From one point this pattern improves testability. The problem of this anti-pattern is in using as a default a foreign default - defined in other module. That makes our code testable, but tightly coupled with another module. If default implementation is local the impact of this anti-pattern is much smaller. Maybe it will be better to refactor it to property injection instead. But when default implementation is foreign we should use constructor injection and do not provide default value for this argument. Instead we should provide it in the Composition Root. This way we don't loose any flexibility but avoid tight coupling with another module.
 
-##### Service locator
+#### Service locator
 
 The last anti-pattern I will talk about is a Service Locator. Service Locator is a common name for some service that we can query for different objects that were previously registered in it. It is the most tricky anti-pattern because it can make us feel that everything is absolutely fine. Many developers do not even consider it as an anti-pattern at all. But Service Locator is in fact oposite to Dependency injection.
 
@@ -309,7 +311,7 @@ But our code is not yet lossely coupled. The next big step for that is to model 
 
 #### Dependency Inversion Principle (DIP)
 
-^ Dependency Inversion Principle. It says that high-level code should not depend on lower-level code, they both should depend on abstractions and abstractions should not depend on details. The point is that the class and its dependency should be on the same level of abstraction. If we have some service it should not depend on concrete API repository or data base repository because they belong to lower level layer.
+Dependency Inversion Principle says that high-level code should not depend on lower-level code, they both should depend on abstractions and abstractions should not depend on details. The point is that the class and its dependency should be on the same level of abstraction. If we have some service it should not depend on concrete API repository or data base repository because they belong to lower level layer.
 
 For example we should not depend on API repository implemented with Alamofire or data base repository implemented with CoreData or Realm. Because this will make our code tightly coupled with specific implementation. Instead we should depend on a higher level abstraction. Both service and repository should depend on that abstraction. So the direction of dependency between higher and lower levels is inverted.
 
@@ -319,9 +321,7 @@ And we should follow this principle to have loosly coupled code. Dependency Inje
 
 It is commonnly said that loose coupling is achieved by programming against interfaces and not to implementations.
 
-> Program to an interface, not an implementation
-> 
-> - _Design Patterns: Elements of Reusable Object-Oriented Software_
+> Program to an interface, not an implementation (_Design Patterns: Elements of Reusable Object-Oriented Software_)
 
 But Dependency Inversion Principle says that it is not about interfaces, but about abstractions. Loose coupling does not mean interfaces or protocols everywhere. Because not always interfaces are good and reusable abstractions.
 
@@ -333,7 +333,7 @@ Base class can be sometimes as good abstraction as a protocol. Of course most of
 
 > Interfaces are not abstractions - _Mark Seeman_ <sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>
 
-![](/content/images/2016/05/image_5.png)
+![](/images/image_5.png)
 
 When you pass a dependency in constructor, or using property or method injection - you should pass it as an abstraction (again, not nececerely using protocol). The same if you use ambinet context. It is not just some shared static instance - it should be an abstraction.
 
@@ -490,20 +490,20 @@ And that can simplify configuration a lot.
 
 If we compare base features of Typhoon and Dip we will notice that they share most of them. It may seem surprising that almost the same features are possible in Swift even though it does not have powerfull runtime features like in Objective-C. But generics and type inference are in fact enougth for that.
 
-    										Typhoon Dip 
+    										Typhoon                Dip 
     										
-    Constructor, property, method injection ✔︎ ✔︎
-    Lifecycle management ✔︎ ✔︎
-    Circular dependencies ✔︎ ✔︎
-    Runtime arguments ✔︎ ✔︎
-    Named definitions ✔︎ ✔︎
-    Storyboards integration ✔︎ ✔︎
-    --------------------------------------------------------
+    Constructor, property, method injection     ✔︎                  ✔︎
+    Lifecycle management                        ✔︎                  ✔︎
+    Circular dependencies                       ✔︎                  ✔︎
+    Runtime arguments                           ✔︎                  ✔︎
+    Named definitions                            ✔︎                  ✔︎
+    Storyboards integration                     ✔︎                  ✔︎
+    ------------------------------------------------------------------------
     
-    Auto-wiring ✔︎ ✔︎
-    Thread safety ✘ ✔︎
-    Interception ✔︎ ✘
-    Infrastructure ✔︎ ✘
+    Auto-wiring                                 ✔︎                  ✔︎
+    Thread safety                               ✘                  ✔︎
+    Interception                                ✔         ︎         ✘
+    Infrastructure                              ✔︎                  ✘
 
 You may ask why do I need to use Typhoon or Dip or any other DI container when I can do the same by my own. There are few reasons I can suggest. They provide easy integration with storyboards, manage components lifecycle for you that can be tricky some times, they can simplify some configurations, Typhoon also provides easy interception using NSProxy and some other additional features.
 

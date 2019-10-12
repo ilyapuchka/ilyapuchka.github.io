@@ -20,10 +20,6 @@ class MyClass<T: MyOtherType where T: MyProtocol> {
 
 But you will notice soon that this approach has more drawbacks then advantages. First if you need to have another such property it will become a mess. Second is that you can not use this type in Interface Builder anymore, as well as you can not see it from Objective-C environment. Third is that interface always looks more complex if there are generics.
 
-<iframe src="//giphy.com/embed/LrRcT6zYxAMRW" width="480" height="270" frameborder="0" class="giphy-embed" allowfullscreen></iframe>
-
-[via GIPHY](http://giphy.com/gifs/one-direction-harry-styles-hmm-LrRcT6zYxAMRW)
-
 The other way could be to define a protocol that adds some traits of class that you want to extend. Let's say you want to have a `UIView` property that also conforms to `Animatable` protocol and you want to access it's animatable trait and view trait. But you don't need to access all of the `UIView` properties, let's say you need only frame for now. Then you can simply add this property to protocol that extends `Animatable` protocol, or use protocols composition:
 
 ```swift

@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f72
 title: ~= vs Range.contains(_:)
 date: 2016-04-14T22:50:00.000Z
-description: ""
-tags: ""
+description: "Today I was working on simple validators that we use for forms (backed by awesome Eureka) and had to implement validator that validates string length. So I did it like this..."
+tags: Swift
 ---
 
 Today I was working on simple validators that we use for forms (backed by awesome [Eureka](https://github.com/xmartlabs/Eureka)) and had to implement validator that validates string length. So I did it like this:
-
-<!-- description -->
 
 ```swift
 struct StringValidator: Validator {

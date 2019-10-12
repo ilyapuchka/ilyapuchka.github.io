@@ -3,7 +3,7 @@ id: 5b6f5a3a9d28c70f0f015f62
 title: Swift 2. Part 1.
 date: 2015-06-28T11:49:34.000Z
 description: ""
-tags: ""
+tags: Swift
 ---
 
 This year I was lucky enougth to go to [WWDC](https://developer.apple.com/wwdc/) as part of [Wire](http://www.wire.com) team. For me the most exciting stuff Apple introduced this year was Swift 2. I went almost to every session about programming languages, ignoring watchOS sessions and games completely. Though the main inspiration I've got from WWDC was to learn game development using Apple tools, like new GameKit. But that's not the point of this post.
@@ -12,7 +12,7 @@ This year I was lucky enougth to go to [WWDC](https://developer.apple.com/wwdc/)
 
 After comming back from WWDC we had a tech talk at Wire and talked with our colleagues about the conference. I've presented about Swift and Objective-C and here is what I've talked about. Some topics are too big to inculed them in one post, so I've decided to break it in several parts.
 
-#### Protocol extensions.
+#### Protocol extensions
 
 In Swift 2 we can now extend not only structs, enums and classes, but also protocols. That gives us opportunity to provide default implementation of some method to all those types that conform to this protocol.
 
@@ -105,7 +105,7 @@ As one of results of introducing this feature number of global functions in Swif
 
 Protocol extensions and rich Swift type system open up a world of 'protocol oriented programming', as Apple calls it, for Cocoa developers (which is, as for me, [nothing new](https://en.wikipedia.org/wiki/Interface-based_programming)). Swift 2 even more makes you to think about your type system. It is the language where difference between good and bad code is in good and bad type system.
 
-#### Error handling.
+#### Error handling
 
 Next big new thing in Swift 2 is error handling. Though we had `NSException` for quite a long time in Objective-C developers still use them very rarely, usually for unrecoverable errors, pretty much as assertions. Instead we use `NSError` as in-out parameter to report our calling code about errors in called method. There is even a code convention around that pattern - if you accept error in-out parameter as last parameter of your method it should return Bool that will mean success or failure. We used the same pattern in Swift 1.x. Even more - in Swift 1.x you could not throw and catch exceptions at all. With Swift 2 things have changed and now we have something semantically similar to exceptions:
 

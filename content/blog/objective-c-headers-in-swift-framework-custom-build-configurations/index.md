@@ -18,61 +18,70 @@ Let's say you are using `UIAppearance` and need to support iOS 8. Then most like
 
 _UIAppearance+Swift.h_
 
-    NS_ASSUME_NONNULL_BEGIN
-    @interface UIView (UIAppearance_Swift)
-    
-    + (instancetype)appearanceWhenContainedWithin:(Class<UIAppearanceContainer>)container;
-    
-    @end
-    NS_ASSUME_NONNULL_END
+```objective-c
+NS_ASSUME_NONNULL_BEGIN
+@interface UIView (UIAppearance_Swift)
+
++ (instancetype)appearanceWhenContainedWithin:(Class<UIAppearanceContainer>)container;
+
+@end
+NS_ASSUME_NONNULL_END
+```
 
 _UIAppearance+Swift.m_
 
-    @implementation UIView (UIAppearance_Swift)
-    
-    + (instancetype)appearanceWhenContainedWithin:(Class<UIAppearanceContainer>)container
-    {
-        return [self appearanceWhenContainedIn: container, nil];
-    }
-    
-    @end
-    
+```objective-c
+@implementation UIView (UIAppearance_Swift)
+
++ (instancetype)appearanceWhenContainedWithin:(Class<UIAppearanceContainer>)container
+{
+    return [self appearanceWhenContainedIn: container, nil];
+}
+
+@end
+```
 
 So far so good, but how do you expose this to the Swift code in the framework itself and to the application code that links to this framework?
 
 In the app target you use bridging headers to expose Objective-C code for Swift code in the same target. But framework targets do not support bridging headers. Frameworks have so called umbrella headers. Here is an example:
 
-    #import <UIKit/UIKit.h>
-    
-    //! Project version number for UIKitExtensions.
-    FOUNDATION_EXPORT double UIKitExtensionsVersionNumber;
-    
-    //! Project version string for UIKitExtensions.
-    FOUNDATION_EXPORT const unsigned char UIKitExtensionsVersionString[];
-    
-    // In this header, you should import all the public headers of your framework using statements like #import <UIKitExtensions/PublicHeader.h>
+```objective-c
+#import <UIKit/UIKit.h>
+
+//! Project version number for UIKitExtensions.
+FOUNDATION_EXPORT double UIKitExtensionsVersionNumber;
+
+//! Project version string for UIKitExtensions.
+FOUNDATION_EXPORT const unsigned char UIKitExtensionsVersionString[];
+
+// In this header, you should import all the public headers of your framework using statements like #import <UIKitExtensions/PublicHeader.h>
+```
 
 See this comment? It might seem that that's what we need. And even [official interoperability guide](https://developer.apple.com/library/content/documentation/Swift/Conceptual/BuildingCocoaApps/MixandMatch.html) suggests so. So we import our header, just like this comment says:
 
-    // In this header, you should import all the public headers of your framework using statements like #import <UIKitExtensions/PublicHeader.h>
-    
-    #import <UIKitExtensions/UIAppearance+Swift.h>
+```objective-c
+// In this header, you should import all the public headers of your framework using statements like #import <UIKitExtensions/PublicHeader.h>
+
+#import <UIKitExtensions/UIAppearance+Swift.h>
+```
 
 Not forgetting of course to make this header public, because by default headers are added to project scope.
 
-![](/content/images/2016/10/--------------2016-10-29---12-57-42.png)
+![](/images/--------------2016-10-29---12-57-42.png)
 
 If you do so your framework will compile perfectly fine, other Swift code in the framework will have access to Objective-C code defined in imported header because compiler will generate appropriate Swift code.
 
-![](/content/images/2016/10/--------------2016-10-29---12-14-00.png)
+![](/images/--------------2016-10-29---12-14-00.png)
 
-    import Foundation
-    import UIKit
-    import UIKitExtensions
-    
-    extension UIView {
-        public class func appearanceWhenContainedWithin(container: AnyObject.Type) -> Self
-    }
+```swift
+import Foundation
+import UIKit
+import UIKitExtensions
+
+extension UIView {
+    public class func appearanceWhenContainedWithin(container: AnyObject.Type) -> Self
+}
+```
 
 But don't completely trust it. This will work for **most** cases but **not for all**.
 
@@ -86,15 +95,15 @@ So based on that let's say we have our _framework target defined in a separate p
 
 If you build the app for `Debug Production` configuration and you have enabled option "Find Implicit Dependencies" in build schema (it's enabled by default) Xcode will first try to build framework for this configuration. But as there is no such configuration in framework project it will fallback to default, which turns out to be `Release`:
 
-![](/content/images/2016/10/--------------2016-10-29---14-54-07.png)
+![](/images/--------------2016-10-29---14-54-07.png)
 
 But the app target will be built normally for `Debug Production` configuration:
 
-![](/content/images/2016/10/--------------2016-10-29---14-59-53.png)
+![](/images/--------------2016-10-29---14-59-53.png)
 
 That all will create build products at different paths, and apparently cause the error:
 
-![](/content/images/2016/10/--------------2016-10-29---15-02-02.png)
+![](/images/--------------2016-10-29---15-02-02.png)
 
 In fact it will be even worse because it will fail to compile only from clean state. If you build an app target again after failure without cleaning derived data folder it _will_ compile. It's very easy not to notice that when you are building locally and then you will only see these errors on a build machine where typically build is done from clean state.
 
@@ -112,30 +121,34 @@ One is not to use custom build configurations or to create the same build config
 
 The last option is to use custom module map and import Objective-C headers there instead of umbrella header. That will make them available from Swift code both in the framework and in the target that links to that framework. And it's very easy to do. You can find the default module map generated by Xcode inside the framework. It will look like this:
 
-    framework module UIKitExtensions {
-      umbrella header "UIKitExtensions.h"
-    
-      export *
-      module * { export * }
-    }
-    
-    module UIKitExtensions.Swift {
-      header "UIKitExtensions-Swift.h"
-    }
+```
+framework module UIKitExtensions {
+    umbrella header "UIKitExtensions.h"
+
+    export *
+    module * { export * }
+}
+
+module UIKitExtensions.Swift {
+    header "UIKitExtensions-Swift.h"
+}
+```
 
 `UIKitExtensions.Swift` module will be always generated by Xcode so we don't need to include it in our custom module map. All we need to do is to import Objective-C header in `UIKitExtension` module (don't forget to remove it from umbrella header):
 
-    framework module UIKitExtensions {
-      umbrella header "UIKitExtensions.h"
-      header "UIAppearance+Swift.h"
-    
-      export *
-      module * { export * }
-    }
+```
+framework module UIKitExtensions {
+    umbrella header "UIKitExtensions.h"
+    header "UIAppearance+Swift.h"
+
+    export *
+    module * { export * }
+}
+```
 
 Then set the path to module map file in Build Settings fo the framework:
 
-![](/content/images/2016/10/--------------2016-10-29---16-12-20.png)
+![](/images/--------------2016-10-29---16-12-20.png)
 
 With that when you try to build your target from clean state there will be no error any more.
 

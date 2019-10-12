@@ -2,13 +2,11 @@
 id: 5bb5ef58fbb5c40cecb2c88f
 title: iOS UI Automation Tests at Babylon
 date: 2018-10-08T09:00:00.000Z
-description: ""
+description: "Probably every iOS developer nowadays knows what UI tests are and how to write them. Sometimes we don't even have to write them ourselves because Xcode can do that for us. Of course, the result is far from ideal and probably you don't want to keep it as it is in your tests, but point is that it's not hard to write a code that will tap a button on a screen. What's hard is the issues you start to face when you write more and more of such tests. In this post, I'll be highlighting some of the issues we face with UI tests at Babylon."
 tags: ""
 ---
 
 > This article is based on the talk I gave at iOS Astronauts meetup that was held on 03.10.2018 at Babylon. You can check out this talk and other videos as well as join the meetup group [here](https://iosastronauts.splashthat.com).
-
-<!-- description -->
 
 Probably every iOS developer nowadays knows what UI tests are and how to write them. Sometimes we don't even have to write them ourselves because Xcode can do that for us. Of course, the result is far from ideal and probably you don't want to keep it as it is in your tests, but point is that it's not hard to write a code that will tap a button on a screen.
 
@@ -24,7 +22,7 @@ In this post, I'll be highlighting some of the issues we face with UI tests at B
 
 One of the main reasons for our UI tests suite failures is a frequent change of content that we don't control (of course after our own changes to the codebase). The best example of that is our chatbot. It works the way that you can ask our chatbot any question and in return, it asks you to answer some more questions so that it can give you better results. Some of these questions will expect you to choose an answer from a set of provided options or give a free-form answer. Depending on your answer chatbot may ask a different question next time. These flows are defined by the backend AI service and are absolutely opaque for the app - with rare exception we don't know what is the difference between one or another option. And from time to time these flows change and for example instead of answer option that says "OK" we receive "SURE". And UI tests start to fail because they can't find a button they expect.
 
-![](/content/images/2018/10/Screenshot-2018-09-30-at-13.13.27.png)
+![](/images/Screenshot-2018-09-30-at-13.13.27.png)
 
 In some cases, we could probably use unique identifiers of the answer options as accessibility identifiers. And it would work for such simple cases where semantics doesn't change. But as we don't control these flows we have no knowledge about the nature of these changes and we might as well receive completely new elements that we know nothing about. Or the flow might change and instead of asking question A and then question B the chatbot will first ask question B, or even C and only then question A. That makes testing these flows on the client side particularly unstable.
 
@@ -37,7 +35,7 @@ Another issue is that some of the user scenarios in our app require not just use
 Another very common reason for tests to fail is the network stability. It's not just about how good is a Wi-Fi signal in the room with your test devices, it's about everything that can happen when you are doing network calls, 500 responses, timeouts, connection drops and so on. And when your tests are running in the cloud, like ours, you have even less control of that.  
 Sometime people go extreme and build racks for test devices with their own WiFi signals and then have to add electromagnetic enclosures to isolate them to avoid networking issues.
 
-![](/content/images/2018/10/img_20160712_122640.jpg)<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>
+![](/images/img_20160712_122640.jpg)[^1]
 
 ### Performance
 
@@ -51,7 +49,7 @@ Now when we know the problems let's look at their solutions that we try to apply
 
 Basically, our strategy is built around an approach that can be summarised as "control the world". By the world, in this case, we mean everything outside the app, which is the _network_, and everything inside the app, which is the _app initial state_ (the runtime state is already controlled by the test)
 
-![](/content/images/2018/10/c-montgomery-burns-handbook-of-world-domination-9781608873203_hr.jpg)<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>
+![](/images/c-montgomery-burns-handbook-of-world-domination-9781608873203_hr.jpg)[^2]
 
 What does it mean to control the network? It means that _our test instead of some backend services have full control over what data our application receives when it makes network calls_.
 
@@ -69,8 +67,11 @@ First, you need to integrate some test related code into the app code. The probl
 
 Next, you will have to somehow instruct the app what stubs to use. This is usually done via launch arguments as it is the only way that we have in UI tests to alter the app behavior. This approach is not very flexible when it comes to passing through something more than a few strings or JSON objects, but it might be enough just to pass the name of the test that is currently running so that the app can pick up the correct network stubs stored in a bundle.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=let%2520body%2520%253D%2520%255B%2520%2522user%2522%253A%2520%2522Kyle%2522%2520%255D%250Astub(uri(%2522%252F%257Buser%257D%252F%257Brepository%257D%2522)%252C%2520json(body))&amp;es=2x&amp;wm=false&amp;ts=false" style="width:100%; height:200px; border:0; overflow:hidden;" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+let body = [ "user": "Kyle" ]
+stub(uri("/{user}/{repository}"), json(body))
+```
+
 - straightforward ✅
 - integrates into application code ❌
 - not very flexible ❌
@@ -81,8 +82,17 @@ Another way of controlling the network is from inside the test process. For that
 
 This approach also requires some integration in the app, but most likely you already have everything that you need for that. There is more work to be done on the test target side though, but its much better isolated from the app. That's another benefit of this approach - most of the code will be in the tests target, inlined into your tests so you will not need to jump between code in the app and tests.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=override%2520func%2520setUp()%2520%257B%250A%2520%2520server.start()%250A%2520%2520server.router.notFoundResponse%2520%253D%2520InterceptResponse()%250A%257D%250A%250Aoverride%2520func%2520tearDown()%2520%257B%250A%2520%2520server.stop()%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:1024px; height:327px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+override func setUp() {
+  server.start()
+  server.router.notFoundResponse = InterceptResponse()
+}
+
+override func tearDown() {
+  server.stop()
+}
+```
+
 - harder to setup ❌
 - integrates into the test runner ✅
 - very flexible ✅
@@ -93,26 +103,85 @@ So what we need to do to make our tests work with the local web server? First of
 
 In our case, it required a little bit more work because our app uses multiple backend services which are located on different hosts, so we can't just replace one host with a localhost, we have to somehow keep the original host of the request. We do that by putting it in the first path component of the request. Then in the test, we can extract it and make a real request to this host if we need.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=public%2520static%2520func%2520local(_%2520env%253A%2520Environment%252C%2520host%253A%2520String)%2520-%253E%2520Environment%2520%257B%250A%2520%2520return%2520Environment(%250A%2520%2520%2520%2520name%253A%2520%2522localhost%2522%252C%250A%2520%2520%2520%2520endpoints%253A%2520Environment.Endpoints(%250A%2520%2520%2520%2520%2520%2520app1BaseURL%253A%2520URL(string%253A%2520%2522http%253A%252F%252F%255C(host)%252F%255C(env.endpoints.app1BaseURL.host!)%2522)!%252C%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%252F%252F%2520http%253A%252F%252Flocalhost%253A8080%252Fdev.api1.com%250A%2520%2520%2520%2520%2520%2520app2BaseURL%253A%2520URL(string%253A%2520%2522http%253A%252F%252F%255C(host)%252F%255C(env.endpoints.app2BaseURL.host!)%2522)!%252C%250A%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%2520%252F%252F%2520http%253A%252F%252Flocalhost%253A8080%252Fdev.api2.com%250A%2520%2520%2520%2520%2520%2520webAppURL%253A%2520env.endpoints.webAppURL%250A%2520%2520%2520%2520)%250A%2520%2520)%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:1024px; height:400px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+public static func local(_ env: Environment, host: String) -> Environment {
+  return Environment(
+    name: "localhost",
+    endpoints: Environment.Endpoints(
+      app1BaseURL: URL(string: "http://\(host)/\(env.endpoints.app1BaseURL.host!)")!,
+                             // http://localhost:8080/dev.api1.com
+      app2BaseURL: URL(string: "http://\(host)/\(env.endpoints.app2BaseURL.host!)")!,
+                             // http://localhost:8080/dev.api2.com
+      webAppURL: env.endpoints.webAppURL
+    )
+  )
+}
+```
 
 Second, and the last, if you use TSL you will need to enable local networking for the app, which is done by adding a single key in Info.plist file.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=application%2Fx-sh&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=if%2520%255B%2520%2522%2524%257BCONFIGURATION%257D%2522%2520%253D%253D%2520%2522Debug%2522%2520%255D%253B%2520then%250A%252Fusr%252Flibexec%252FPlistBuddy%2520-c%2520%2522Set%2520NSAppTransportSecurity%253ANSAllowsLocalNetworking%2520YES%2522%2520%2522%2524%257BTARGET_BUILD_DIR%257D%252F%2524%257BINFOPLIST_PATH%257D%2522%250Afi&amp;es=2x&amp;wm=false&amp;ts=false" style="width:1024px; height:250px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```
+if [ "${CONFIGURATION}" == "Debug" ]; then
+    /usr/libexec/PlistBuddy -c "Set NSAppTransportSecurity:NSAllowsLocalNetworking YES" "${TARGET_BUILD_DIR}/${INFOPLIST_PATH}"
+fi
+```
+
 ### Local server setup - in the test
 
 On the test runner side, you need to do a bit more. First of all, you need a web server implementation of course. But that's not something you'll have to write yourself, there are open-source solutions that have been available for a while, like [GCDWebServer](https://github.com/swisspol/GCDWebServer), [swifter](https://github.com/httpswift/swifter), [Kitura](https://www.kitura.io), or if you want you can [implement your own](https://github.com/ilyapuchka/SwiftNIOMock) based on [SwiftNIO](https://github.com/apple/swift-nio/tree/master/Sources/NIOHTTP1Server).
 
 What implementation you use does not really matter, some of them are easier to set up than others (for example I couldn't go through Kitura HelloWorld tutorial) but they basically work the same way. We currently use a small web framework called [Ambassador](https://github.com/envoy/Ambassador) that works pretty well even though it is relatively unknown and gives us everything we need for testing purposes and nothing extra that we don't need.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=class%2520MockServer%2520%257B%250A%2520%2520func%2520start()%2520%257B%257D%250A%2520%2520func%2520stop()%2520%257B%257D%250A%2520%2520func%2520setupRoutes()%2520%257B%257D%250A%2520%2520func%2520startRecording(testName%253A%2520String)%2520%257B%257D%250A%257D%250A%250Aclass%2520MyTest%253A%2520XCTestCase%2520%257B%250A%2520%2520override%2520func%2520setUp()%2520%257B%250A%2520%2520%2520%2520server.start()%250A%2520%2520%2520%2520if%2520runsAgainstMockServer%2520%257B%250A%2520%2520%2520%2520%2520%2520%252F%252F%2520local%2520server%2520mocks%2520backend%250A%2520%2520%2520%2520%2520%2520server.setupRoutes()%250A%2520%2520%2520%2520%257D%2520else%2520server.config.recordingMode%2520!%253D%2520nil%2520%257B%250A%2520%2520%2520%2520%2520%2520%252F%252F%2520%2522snapshot%2522%2520tests%250A%2520%2520%2520%2520%2520%2520server.startRecording(testName%253A%2520testName)%250A%2520%2520%2520%2520%257D%2520else%2520%257B%250A%2520%2520%2520%2520%2520%2520%252F%252F%2520local%2520server%2520as%2520a%2520proxy%250A%2520%2520%2520%2520%2520%2520server.router.notFoundResponse%2520%253D%2520InterceptResponse()%250A%2520%2520%2520%2520%257D%250A%2520%2520%257D%250A%2520%2520%250A%2520%2520override%2520func%2520tearDown()%2520%257B%250A%2520%2520%2520%2520server.stop()%250A%2520%2520%257D%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:100%; height:700px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+class MockServer {
+  func start() {}
+  func stop() {}
+  func setupRoutes() {}
+  func startRecording(testName: String) {}
+}
+
+class MyTest: XCTestCase {
+  override func setUp() {
+    server.start()
+    if runsAgainstMockServer {
+      // local server mocks backend
+      server.setupRoutes()
+    } else server.config.recordingMode != nil {
+      // "snapshot" tests
+      server.startRecording(testName: testName)
+    } else {
+      // local server as a proxy
+      server.router.notFoundResponse = InterceptResponse()
+    }
+  }
+  
+  override func tearDown() {
+    server.stop()
+  }
+}
+```
 
 Next, you need to intercept the requests from the app using this web server. The web frameworks already provide all functionality for that, usually through the concept known as "router". Basically, this router holds a mapping between URL patterns and functions to handle them. In any web framework, it can be done by registering a handler for all incoming requests. This handler when invoked parses the request and then we can decide what to do with it. For example, we can redirect this request to the real server using `URLSession`, get the response and then send it back to the app.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=import%2520EnvoyAmbassador%250Aimport%2520Embassy%250A%250Astruct%2520InterceptResponse%253A%2520WebApp%2520%257B%250A%2520%2520func%2520app(%250A%2520%2520%2520%2520_%2520environ%253A%2520%255BString%253A%2520Any%255D%252C%250A%2520%2520%2520%2520startResponse%253A%2520%2540escaping%2520StartResponse%252C%250A%2520%2520%2520%2520sendBody%253A%2520%2540escaping%2520SendBody%2520%250A%2520%2520)%2520%257B%250A%2520%2520%2520%2520let%2520env%2520%253D%2520RequestEnvironment(environ)%250A%2520%2520%2520%2520let%2520request%2520%253D%2520env.request%250A%2520%2520%2520%2520session.dataTask(with%253A%2520request)%2520%257B%2520data%252C%2520response%252C%2520error%2520in%250A%2520%2520%2520%2520%2520%2520self.complete(env%252C%2520request%252C%2520response%252C%2520data%252C%2520startResponse%252C%2520sendBody)%250A%2520%2520%2520%2520%257D.resume()%250A%2520%2520%257D%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:100%; height:530px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+import EnvoyAmbassador
+import Embassy
+
+struct InterceptResponse: WebApp {
+  func app(
+    _ environ: [String: Any],
+    startResponse: @escaping StartResponse,
+    sendBody: @escaping SendBody 
+  ) {
+    let env = RequestEnvironment(environ)
+    let request = env.request
+    session.dataTask(with: request) { data, response, error in
+      self.complete(env, request, response, data, startResponse, sendBody)
+    }.resume()
+  }
+}
+```
+
 ### Local server edge cases
 
 Before we continue to how we use the local web server in our tests, there are some interesting edge cases that we faced when using this approach.
@@ -141,8 +210,30 @@ Let's talk a bit more about network session recording. When a local web server r
 
 There are again several open source solutions for that, like [DVR](https://github.com/venmo/DVR), but we are using one that is called [Vinyl](https://github.com/Velhotes/Vinyl) and was actually developed by our team members. In practice, it worked much better than DVR and is much easier to use.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=func%2520startRecording(testName%253A%2520String)%2520%257B%250A%2520%2520%252F%252F%2520detect%2520recording%2520mode%250A%2520%2520let%2520recordingMode%253A%2520RecordingMode%250A%2520%2520if%2520case%2520.record%253F%2520%253D%2520config.recordingMode%2520%257B%250A%2520%2520%2520%2520recordingMode%2520%253D%2520.missingVinyl(recordingPath%253A%2520recordingPath)%250A%2520%2520%257D%2520else%2520%257B%250A%2520%2520%2520%2520recordingMode%2520%253D%2520.none%250A%2520%2520%257D%250A%2520%2520%252F%252F%2520configure%2520matching%2520strategy%250A%2520%2520let%2520matchingStrategy%2520%253D%2520MatchingStrategy.requestAttributes(%250A%2520%2520%2520%2520types%253A%2520%255B.method%252C%2520.url%252C%2520.query%252C%2520.body%255D%252C%250A%2520%2520%2520%2520playTracksUniquely%253A%2520false%250A%2520%2520)%250A%2520%2520%252F%252F%2520create%2520URLSession%2520mock%250A%2520%2520recordingSession%2520%253D%2520Turntable(%250A%2520%2520%2520%2520vinylName%253A%2520vinylName(forTest%253A%2520testName)%252C%2520%250A%2520%2520%2520%2520turntableConfiguration%253A%2520TurntableConfiguration(%250A%2520%2520%2520%2520%2520%2520matchingStrategy%253A%2520matchingStrategy%252C%250A%2520%2520%2520%2520%2520%2520recordingMode%253A%2520recordingMode%250A%2520%2520))%250A%2520%2520router.notFoundResponse%2520%253D%2520InterceptResponse(session%253A%2520recordingSession!)%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:100%; height:670px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+func startRecording(testName: String) {
+  // detect recording mode
+  let recordingMode: RecordingMode
+  if case .record? = config.recordingMode {
+    recordingMode = .missingVinyl(recordingPath: recordingPath)
+  } else {
+    recordingMode = .none
+  }
+  // configure matching strategy
+  let matchingStrategy = MatchingStrategy.requestAttributes(
+    types: [.method, .url, .query, .body],
+    playTracksUniquely: false
+  )
+  // create URLSession mock
+  recordingSession = Turntable(
+    vinylName: vinylName(forTest: testName), 
+    turntableConfiguration: TurntableConfiguration(
+      matchingStrategy: matchingStrategy,
+      recordingMode: recordingMode
+  ))
+  router.notFoundResponse = InterceptResponse(session: recordingSession!)
+}
+```
 
 Recording network session is pretty straightforward but when it comes to replaying them there are two interesting problems we have to solve.
 
@@ -152,25 +243,54 @@ Now when we replay these network requests we need a way to match previously reco
 
 To solve that we simply store all random strings that test generates in a file next to network logs and then in replay mode read from it. This way when we replay test we use exactly the same input that was used when this test was recorded.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=let%2520matchingStrategy%2520%253D%2520MatchingStrategy.requestAttributes(%250A%2520%2520types%253A%2520%255B.method%252C%2520.url%252C%2520.query%252C%2520.body%255D%252C%250A%2520%2520playTracksUniquely%253A%2520false%250A)%250A%250Afunc%2520generateRandomString(length%253A%2520Int%252C%2520key%253A%2520String%253F)%2520-%253E%2520String%2520%257B%250A%2520%2520if%2520server.config.recordingMode%2520!%253D%2520nil%252C%2520let%2520key%2520%253D%2520key%2520%257B%250A%2520%2520%2520%2520%2520%2520return%2520randomStringFromFile(length%253A%2520length%252C%2520key%253A%2520key)%250A%2520%2520%257D%2520else%2520%257B%250A%2520%2520%2520%2520%2520%2520return%2520randomString(length%253A%2520length)%250A%2520%2520%257D%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:100%; height:430px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+let matchingStrategy = MatchingStrategy.requestAttributes(
+  types: [.method, .url, .query, .body],
+  playTracksUniquely: false
+)
+
+func generateRandomString(length: Int, key: String?) -> String {
+  if server.config.recordingMode != nil, let key = key {
+      return randomStringFromFile(length: length, key: key)
+  } else {
+      return randomString(length: length)
+  }
+}
+```
 
 Another problem is similar to random input data - it's a current date. For example when user books an appointment our backend returns us available time slots. Then before submitting a book appointment request, we are checking if a selected time slot is actually in the future.
 
-![](/content/images/2018/10/Screenshot-2018-09-30-at-15.36.37.png)
+![](/images/Screenshot-2018-09-30-at-15.36.37.png)
 
 Now imagine that we replay this scenario against network recording made yesterday. All time slots will be in the past so the date check will fail and we will treat all of the time slots as expired. To solve that we need our app to use a custom date factory instead of default `Date` constructor that in tests returns the current date as a date of recording.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=extension%2520Date%2520%257B%250A%2520%2520static%2520func%2520now()%2520-%253E%2520Date%2520%257B%250A%2520%2520%2520%2520%2523if%2520targetEnvironment(simulator)%250A%2520%2520%2520%2520return%2520Date(fromLaunchArguments%253A%2520CommandLine.arguments)%250A%2520%2520%2520%2520%2523else%250A%2520%2520%2520%2520return%2520Date()%250A%2520%2520%2520%2520%2523end%250A%2520%2520%257D%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:100%; height:350px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+extension Date {
+  static func now() -> Date {
+    #if targetEnvironment(simulator)
+    return Date(fromLaunchArguments: CommandLine.arguments)
+    #else
+    return Date()
+    #end
+  }
+}
+```
+
 ### Mocking backend
 
 The last use case for the local web server that we use is to completely mock the backend. This is useful for scenarios that we can't test only using the app and which require some actions on GP portal, i.e. prescriptions flow. For that, we need to have a prescription created on a backend. But instead, we can mock the endpoint to get prescriptions and return stubbed prescription. Or the scenario of registering with Facebook. For that, you need to have a test facebook user. But you can use it only once to register on a real server. We could create new test users in each test via Facebook API but this is very slow and we are introducing another point of failure that we can't control. Instead we use a single test user that we use to log in with Facebook in a browser and then we use a mock implementation of registration endpoint that we configure based on the test scenario - it can either return successful response or return an error so that we can make sure that the app reacts correctly on all responses.
 
 The main problem with this approach is that you need to mock everything. As soon as you mocked one endpoint, i.e. that returns fake authorization token or fake prescription, you can't make any requests using this data to the real backend because it will not know anything about this fake data. You don't have to reimplement all backend logic though, instead, you can just configure it to be in a specific state, i.e. have an upcoming appointment for the user or have a completed appointment with a prescription. So the logic that you need to implement boils down to doing CRUD operations on collections of data using queries based on incoming requests. And this can be implemented in a pretty neat way.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=func%2520setUp()%2520%257B%250A%2520%2520server.router%255B%2522patients%252F%2522%252C%2520.number()%255D%2520%253D%2520server.get(%255C.patients%252C%2520by%253A%2520%255C.id)%250A%257D%250A%250Afunc%2520test()%2520%257B%250A%2520%2520server.patient%2520%253D%2520PatientDTO.mock()%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:1000px; height:300px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+func setUp() {
+  server.router["patients/", .number()] = server.get(\.patients, by: \.id)
+}
+
+func test() {
+  server.patient = PatientDTO.mock()
+}
+```
 
 Another thing you'll need to implement is `Encodable` on your data models. In the app, most of your data models need to implement only `Decodable`, but to send them to the app from a mock server you need to decode them. If your models are simple or use tools like Sourcery you can get this boilerplate for free either relying on compiler generated implementations or code generated by Sourcery. Otherwise, you need to write this boilerplate code.
 
@@ -188,7 +308,7 @@ Snapshots approach comes with another benefit that is that it solves network and
 
 Now let's move on to the last problem - tests performance. Specifically repeating the same steps in different tests. Every time a user tries to access clinical records in the app we may ask them for their password. It is similar to how AppStore app asks you for your password or a fingerprint from time to time when you make a purchase. So we have to handle this in a lot of tests and spend quite some time on these otherwise useless steps.
 
-![](/content/images/2018/10/Simulator-Screen-Shot---iPhone-XR---2018-09-30-at-16.02.13.png)
+![](/images/Simulator-Screen-Shot---iPhone-XR---2018-09-30-at-16.02.13.png)
 
 To solve that we introduce shortcuts in the app which are only present when the app is built for the simulator. They work pretty much as feature toggles, just private and only available for our tests. We also use launch arguments to override some user defaults that we use in the app, for example, to check if we already showed onboarding screens or a screen that asks a user to enable push notifications.
 
@@ -208,8 +328,29 @@ We could even use API calls from tests to interact with GP portal instead of usi
 
 Finally, let's see now how our typical UI test looks like. Here is an example.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=import%2520XCTest%250Aimport%2520XCTest_Gherkin%250A%250Aclass%2520MockServerTestExample%253A%2520BaseFeature%2520%257B%250A%250A%2520%2520override%2520func%2520setUp()%2520%257B%250A%2520%2520%2520%2520self.server.config.recordingMode%2520%253D%2520.replay%250A%2520%2520%2520%2520super.setUp()%250A%2520%2520%257D%250A%250A%2520%2520func%2520testExample()%2520%257B%250A%2520%2520%2520%2520And(%2522I%2520tap%2520the%2520Get%2520Started%2520button%2522)%250A%250A%2520%2520%2520%2520When(%2522I%2520enter%2520my%2520details%2522)%250A%2520%2520%2520%2520And(%2522I%2520accept%2520terms%2520and%2520conditions%2522)%250A%2520%2520%2520%2520And(%2522I%2520tap%2520on%2520Lets%2520go%2520button%2522)%250A%2520%2520%2520%2520And(%2522I%2520accept%2520privacy%2520policy%2522)%250A%250A%2520%2520%2520%2520Then(%2522I%2520see%2520the%2520home%2520screen%2522)%250A%2520%2520%257D%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:100%; height:600px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+import XCTest
+import XCTest_Gherkin
+
+class MockServerTestExample: BaseFeature {
+
+  override func setUp() {
+    self.server.config.recordingMode = .replay
+    super.setUp()
+  }
+
+  func testExample() {
+    And("I tap the Get Started button")
+
+    When("I enter my details")
+    And("I accept terms and conditions")
+    And("I tap on Lets go button")
+    And("I accept privacy policy")
+
+    Then("I see the home screen")
+  }
+}
+```
 
 As you can see it uses a mock server in replay mode and it's written in BDD style with clear given-when-then sections. It's also written in plain English which highly improves its readability. You can actually write it in any other language because these expressions are just plain strings. But at the same time, it is an absolutely valid Swift code.
 
@@ -219,17 +360,49 @@ To write tests like that we use a framework [XCTest-Gherkin](https://github.com/
 
 Of course, by itself this test will not do anything. It will compile and run but it will fail on the first line because the Gherkin framework does not know what to do on this step. First, we need to implement the steps. Internally the Gherkin framework has a mapping between step expressions, which are just regular expressions, and their implementations, passed in as closures. Then when the step is invoked in tests using for example Given method, the string passed as a parameter to this method is matched with all available steps expressions and first matched step is invoked.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=func%2520defineSteps()%2520%257B%250A%2520%2520step(%2522I%2520launch%2520the%2520app%2522)%2520%257B%250A%2520%2520%2520%2520XCUIApplication().launchIfNeeded()%250A%2520%2520%257D%250A%2520%2520%250A%2520%2520step(%2522I%2520see%2520the%2520home%2520screen%2522)%2520%257B%250A%2520%2520%2520%2520XCTAssertTrue(TabBarMenu().isScreenDisplayed())%250A%2520%2520%2520%2520XCTAssertTrue(TabBarMenu().isSelected(tabBarItem%253A%2520.home))%250A%2520%2520%2520%2520XCTAssertTrue(HomeScreen().isScreenDisplayed())%250A%2520%2520%257D%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:100%; height:380px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+func defineSteps() {
+  step("I launch the app") {
+    XCUIApplication().launchIfNeeded()
+  }
+  
+  step("I see the home screen") {
+    XCTAssertTrue(TabBarMenu().isScreenDisplayed())
+    XCTAssertTrue(TabBarMenu().isSelected(tabBarItem: .home))
+    XCTAssertTrue(HomeScreen().isScreenDisplayed())
+  }
+}
+```
 
 To implement steps we use plain XCTest APIs with some helpers and a [Page Object pattern](https://martinfowler.com/bliki/PageObject.html). This allows us to make steps implementation highly readable too and makes our tests code very structured (you can argue if its a good structure but they are definitely structured). For each screen, we have a dedicated Page Object with the main goal to abstract interactions with XCUIElements and to hide implementations details. Each page object has a dedicated Steps Definer with implementations of steps related to this screen. These steps are used by tests which are grouped in Features, fancy name to call subclasses of XCTestCase.
 
-<iframe src="https://carbon.now.sh/embed/?bg=rgba(255%2C255%2C255%2C1)&amp;t=dracula&amp;wt=none&amp;l=swift&amp;ds=false&amp;dsyoff=20px&amp;dsblur=68px&amp;wc=false&amp;wa=true&amp;pv=48px&amp;ph=32px&amp;ln=false&amp;fm=Source%20Code%20Pro&amp;fs=16px&amp;lh=133%25&amp;si=false&amp;code=class%2520HomeScreen%253A%2520BaseScreen%2520%257B%250A%2520%2520fileprivate%2520enum%2520Views%2520%257B%250A%2520%2520%2520%2520static%2520let%2520root%2520%253D%2520%2522homeRootView%2522%250A%2520%2520%257D%250A%2520%2520%250A%2520%2520func%2520isScreenDisplayed()%2520-%253E%2520Bool%2520%257B%250A%2520%2520%2520%2520let%2520rootView%2520%253D%2520app.otherElements%255BViews.root%255D%250A%2520%2520%2520%2520return%2520tryWaitFor(element%253A%2520rootView%252C%2520withState%253A%2520.exists)%250A%2520%2520%257D%250A%257D%250A%250Aclass%2520HomeScreenStepsDefiner%253A%2520BaseSteps%2520%257B%250A%2520%2520step(%2522I%2520see%2520the%2520home%2520screen%2522)%2520%257B%250A%2520%2520%2520%2520XCTAssertTrue(HomeScreen().isScreenDisplayed())%250A%2520%2520%257D%250A%257D%250A%250Aclass%2520HomeScreenFeature%253A%2520BaseFeature%2520%257B%250A%2520%2520func%2520test_view_default_home_screen()%2520%257B%257D%250A%2520%2520func%2520test_start_chat_from_home_screen()%2520%257B%257D%250A%257D&amp;es=2x&amp;wm=false&amp;ts=false" style="width:100%; height:600px; border:0; overflow:hidden; position: relative; left: 50%; transform: translateX(-50%);" sandbox="allow-scripts allow-same-origin">
-</iframe>
+```swift
+class HomeScreen: BaseScreen {
+  fileprivate enum Views {
+    static let root = "homeRootView"
+  }
+  
+  func isScreenDisplayed() -> Bool {
+    let rootView = app.otherElements[Views.root]
+    return tryWaitFor(element: rootView, withState: .exists)
+  }
+}
+
+class HomeScreenStepsDefiner: BaseSteps {
+  step("I see the home screen") {
+    XCTAssertTrue(HomeScreen().isScreenDisplayed())
+  }
+}
+
+class HomeScreenFeature: BaseFeature {
+  func test_view_default_home_screen() {}
+  func test_start_chat_from_home_screen() {}
+}
+```
 
 Another nice feature of XCTest-Gherkin is that it automatically wraps steps into `XCTActivity` that can be seen in the test activity log. Each step starts a new activity which has the same name as step expression. This way the activity log looks exactly as our tests. And then we use [XCTestHTMLReport](https://github.com/TitouanVanBelle/XCTestHTMLReport) to generate HTML reports which look exactly like activity logs in Xcode.
 
-![Screenshot-2018-09-30-at-17.14.55](/content/images/2018/10/Screenshot-2018-09-30-at-17.14.55.png)
+![Screenshot-2018-09-30-at-17.14.55](/images/Screenshot-2018-09-30-at-17.14.55.png)
 
 XCTest-Gherkin allows us to write very readable tests, but unfortunately, Xcode is not a great IDE to write such tests. There is no code completion for steps expression because they are just plain strings and there is no way to navigate from the test to the step implementation. Thankfully there are much better text editors like VSCode. It has a nice Gherkin plugin that works well with steps implemented basically with any BDD framework in any language, even with XCTest-Gherkin.
 
@@ -247,14 +420,6 @@ This is not something that we use though, at least right now, because tools are 
 
 Now you know how local web server, snapshot tests and mock backend help us to solve some issues with UI tests. We are in the process of applying these approaches and currently have only few tests using snapshots and mocked backend but we already see how it enables us easily automate scenarious that we had to test manually before. If it proves to work well on a long run we will probably even opensource some of this code. And hopefully soon thanks to these techniques the only reason for our tests to fail will be developers being lazy to update them.
 
-* * *
-<section class="footnotes">
-<ol class="footnotes-list">
-<li id="fn1" class="footnote-item">
-<p><a href="https://techcrunch.com/2016/07/13/facebook-lifts-the-veil-on-its-mobile-device-lab">https://techcrunch.com/2016/07/13/facebook-lifts-the-veil-on-its-mobile-device-lab</a> <a href="#fnref1" class="footnote-backref">↩︎</a></p>
-</li>
-<li id="fn2" class="footnote-item">
-<p>C. Montgomery Burns' Handbook of World Domination By Matt Groening. <a href="#fnref2" class="footnote-backref">↩︎</a></p>
-</li>
-</ol>
-</section>
+[^1]: https://techcrunch.com/2016/07/13/facebook-lifts-the-veil-on-its-mobile-device-lab">https://techcrunch.com/2016/07/13/facebook-lifts-the-veil-on-its-mobile-device-lab
+
+[^2]: C. Montgomery Burns' Handbook of World Domination By Matt Groening. 

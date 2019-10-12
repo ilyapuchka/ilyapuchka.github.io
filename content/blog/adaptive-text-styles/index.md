@@ -48,7 +48,7 @@ func bodyTextStyle(_ traitCollection: UITraitCollection) -> UIFont? {
 
 As you can see we already think about using different size for different size class. And that's what your designer should think about too.
 
-> Note: it's a very good idea to define font styles in a format that is readable both for designer and developer and then using a code generator like (Sourcery)[[https://github.com/krzysztofzablocki/Sourcery](https://github.com/krzysztofzablocki/Sourcery)] transform it into code. At least you can use [R.swift](https://github.com/mac-cain13/R.swift/blob/master/Documentation/Examples.md#custom-fonts) or [SwiftGen](https://github.com/AliSoftware/SwiftGen#uifont-and-nsfont) to generate code to access your font resources.
+> Note: it's a very good idea to define font styles in a format that is readable both for designer and developer and then using a code generator like [Sourcery](https://github.com/krzysztofzablocki/Sourcery) transform it into code. At least you can use [R.swift](https://github.com/mac-cain13/R.swift/blob/master/Documentation/Examples.md#custom-fonts) or [SwiftGen](https://github.com/AliSoftware/SwiftGen#uifont-and-nsfont) to generate code to access your font resources.
 
 When you are done with specifying your font style functions you will notice the obvious thing - they all have a same signature. Seems like a good candidate for a typealias:
 

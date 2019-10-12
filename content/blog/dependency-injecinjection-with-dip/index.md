@@ -2,15 +2,13 @@
 id: 5b6f5a3a9d28c70f0f015f6d
 title: Dependency injection with Dip
 date: 2015-12-24T19:20:38.000Z
-description: ""
+description: "In some of my previous posts I wrote about using dependency injection with Typhoon framework and described some internals of analogous pure-Swift framework called Dip. Here I want to illustrate how Dip can be used in a real project using the same example that I used before. Also this post will contain a sneak peak of some upcoming extensions of Dip."
 tags: Swift, Dependency Injection
 ---
 
-In some of my [previous posts](http://ilya.puchka.me/view-controller-thinning-dependency-injection/) I wrote about using dependency injection with Typhoon framework and [described](http://ilya.puchka.me/ioc-container-in-swift/) [some](http://ilya.puchka.me/ioc-container-in-swift-circular-dependencies-and-auto-injection/) internals of analogous pure-Swift framework called [Dip](https://github.com/AliSoftware/Dip). Here I want to illustrate how Dip can be used in a real project using the same example that I used before. Also this post will contain a sneak peak of some upcoming extensions of Dip (probably they will be released as separate projects). You can check out source code [here](https://github.com/ilyapuchka/ViewControllerThinning/tree/dip). Note that it uses [my fork](https://github.com/ilyapuchka/Dip) of Dip and features described here are not yet released as part of project or any extension.
-
-<!-- description -->
-
 > Note (15.04.16): This post is updated to reflect some of the latest changes in Dip.
+
+In some of my [previous posts](http://ilya.puchka.me/view-controller-thinning-dependency-injection/) I wrote about using dependency injection with Typhoon framework and [described](http://ilya.puchka.me/ioc-container-in-swift/) [some](http://ilya.puchka.me/ioc-container-in-swift-circular-dependencies-and-auto-injection/) internals of analogous pure-Swift framework called [Dip](https://github.com/AliSoftware/Dip). Here I want to illustrate how Dip can be used in a real project using the same example that I used before. Also this post will contain a sneak peak of some upcoming extensions of Dip (probably they will be released as separate projects). You can check out source code [here](https://github.com/ilyapuchka/ViewControllerThinning/tree/dip). Note that it uses [my fork](https://github.com/ilyapuchka/Dip) of Dip and features described here are not yet released as part of project or any extension.
 
 #### Dip assemblies
 

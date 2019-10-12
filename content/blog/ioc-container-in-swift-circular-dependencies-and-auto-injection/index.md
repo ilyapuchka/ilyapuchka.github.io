@@ -2,15 +2,14 @@
 id: 5b6f5a3a9d28c70f0f015f6c
 title: IoC container in Swift. Circular dependencies and auto-injection
 date: 2015-11-11T18:24:56.000Z
-description: ""
+description: "In my previous post I wrote about Dip, lightweight IoC written in Swift. Here I would like to describe how some other of it's features were implemented. They are not yet available in original repo, but you can check them out in my fork.
+"
 tags: ""
 ---
 
 > Note (15.04.16): This post is updated to reflect some of the latest changes in Dip.
 
 In my [previous post](http://ilya.puchka.me/ioc-container-in-swift/) I wrote about [Dip](https://github.com/AliSoftware/Dip), lightweight IoC written in Swift. Here I would like to describe how some other of it's features were implemented. They are not yet available in original repo, but you can check them out in my [fork](https://github.com/ilyapuchka/Dip/tree/feature/auto-injection).
-
-<!-- description -->
 
 ### Circular dependencies
 
@@ -42,10 +41,10 @@ class ResolvedInstances {
         depth = depth + 1
         
         defer {
-        depth = depth - 1
-        if depth == 0 {
-            resolvedInstances.removeAll()
-        }
+            depth = depth - 1
+            if depth == 0 {
+                resolvedInstances.removeAll()
+            }
         }
 
         let resolved = block()
@@ -65,7 +64,7 @@ func resolveDependencies(block: (DependencyContainer, T) -> ()) -> DefinitionOf<
     }
     self.resolveDependenciesBlock = block
     return self
-    }
+}
 
 var scope: ComponentScope
 var factory: F
@@ -91,8 +90,7 @@ func _resolve<T, F>(key: DefinitionKey?, definition: DefinitionOf<T, F>, builder
 
         if let previouslyResolved: T = resolvedInstances.previouslyResolved(key) {
             return previouslyResolved
-        }
-        else {
+        } else {
             let resolvedInstance = builder(definition.factory)
     
             if let previouslyResolved: T = resolvedInstances.previouslyResolved(key) {
@@ -102,6 +100,7 @@ func _resolve<T, F>(key: DefinitionKey?, definition: DefinitionOf<T, F>, builder
             resolvedInstances.storeResolvedInstance(resolvedInstance, forKey: key)
             definition.resolveDependenciesBlock?(self, resolvedInstance)
             return resolvedInstance
+        }
     }
 }
 
@@ -166,7 +165,7 @@ final class Injected<T> {
 
     var value: T? {
         get {
-                return _value as? T
+            return _value as? T
         }
     }
 }

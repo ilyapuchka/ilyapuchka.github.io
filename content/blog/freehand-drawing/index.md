@@ -2,13 +2,11 @@
 id: 5b6f5a3a9d28c70f0f015f76
 title: Freehand drawing
 date: 2016-07-31T16:53:01.000Z
-description: ""
+description: "Naive implementation of rendering user's freehand drawing is strait forward. We need to listen to touch events from view and construct the path appending lines to each subsequent point..."
 tags: ""
 ---
 
 > This post is a part of the [series about shapes recognition](http://ilya.puchka.me/shapes-recognition/). This post is also available as a part of a [playground](https://github.com/ilyapuchka/ShapesRecognition).
-
-<!-- description -->
 
 Naive implementation of rendering user's freehand drawing is strait forward. We need to listen to touch events from view and construct the path appending lines to each subsequent point.
 
@@ -40,7 +38,7 @@ public class LineDrawing: Drawing {
 
 But usually such naive approach does not provide acceptable results. Strokes looks ridgid and angular.
 
-![](/content/images/2016/07/linedrawing.png)
+![](/images/linedrawing.png)
 
 Luckily it's not very hard to improve our drawing strategy by utilizing Bezier curves. Intead of appending line segments we can append curve segments. We need four points to draw Bezier curve - start point, end point and two control points. So we need to accumulate touch points in array up to four, append curve segment and flush points array.
 
@@ -88,7 +86,7 @@ public class CurveDrawing: Drawing {
 
 When touchs end we can loose some points at the end of the curve. To avoid that we repeat the last recorded point until we have enouth points to draw the last segment. Dependeing on how many points are missing it can result in a line or curve segment.
 
-![](/content/images/2016/07/curvedrawing.png)
+![](/images/curvedrawing.png)
 
 Looks better but still not ideal. As you can see there are obtuse angles at the points where two curves connects. We can avoid that by shifting this point to the median of second control point of the first curve and the first control point of the next curve.
 
@@ -126,6 +124,6 @@ public class SmoothDrawing: Drawing {
 }
 ```
 
-![](/content/images/2016/07/smoothdrawing.png)
+![](/images/smoothdrawing.png)
 
 Lastly in iOS 9 we have access to coalescing touches (when touch moves we can get more touch points between previous and current touch location), touches prediction and precies touch location. They can be used to achieve even more accurate result. If we have access to coalesced touches we can simply process them one by one as we normally do for other touches. Touch prediction can be used to complete smoothed path in a more intellegent way. Also we can access other touch parameters such as force (to control the path thikness) or stylus orientation. Play with it if you have access to supported devices and check out [WWDC session](https://developer.apple.com/videos/play/wwdc2015/233/) on that topic.

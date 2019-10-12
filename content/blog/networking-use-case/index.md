@@ -16,293 +16,302 @@ When we make a request it has some well known signature, like it's method, set o
 
 Here is our request:
 
-    
-    typedef NS_ENUM(NSUInteger, HTTPMethod){
-        GET, POST, PUT, DELETE, HEAD
-    };
-    
-    @protocol APIResponse;
-    
-    @protocol APIRequest <NSObject>
-    
-    - (HTTPMethod)method;
-    - (NSURL *)baseURL;
-    - (NSString *)path;
-    - (NSDictionary *)parameters;
-    - (NSDictionary *)headers;
-    - (Class<APIResponse>)responseClass;
-    
-    @end
-    
-    @protocol APIResponse <NSObject>
-    
-    - (NSURLSessionDataTask *)task;
-    - (NSURLResponse *)response;
-    - (NSError *)error;
-    - (id)responseObject;
-    - (id)processedResponseObject;
-    
-    - (instancetype)initWithTask:(NSURLSessionDataTask *)task
-                        response:(NSHTTPURLResponse *)response
-                  responseObject:(id)responseObject
-                           error:(NSError *)error;
-    
-    - (id)processResponseObject:(NSError **)error;
-    
-    @end
+```objective-c
+typedef NS_ENUM(NSUInteger, HTTPMethod){
+GET, POST, PUT, DELETE, HEAD
+};
+
+@protocol APIResponse;
+
+@protocol APIRequest <NSObject>
+
+- (HTTPMethod)method;
+- (NSURL *)baseURL;
+- (NSString *)path;
+- (NSDictionary *)parameters;
+- (NSDictionary *)headers;
+- (Class<APIResponse>)responseClass;
+
+@end
+
+@protocol APIResponse <NSObject>
+
+- (NSURLSessionDataTask *)task;
+- (NSURLResponse *)response;
+- (NSError *)error;
+- (id)responseObject;
+- (id)processedResponseObject;
+
+- (instancetype)initWithTask:(NSURLSessionDataTask *)task
+                response:(NSHTTPURLResponse *)response
+            responseObject:(id)responseObject
+                    error:(NSError *)error;
+
+- (id)processResponseObject:(NSError **)error;
+
+@end
+```
 
 We can add now some basic implementation of these protocols, i.e. to represent request for data in JSON format:
 
-    
-    @interface SimpleAPIRequest : NSObject <APIRequest>
-    
-    @end
-    
-    @interface JSONAPIRequest : SimpleAPIRequest
-    
-    @end
-    
-    @interface SimpleAPIRequest()
-    
-    @property (nonatomic) HTTPMethod method;
-    @property (nonatomic, copy) NSString *path;
-    @property (nonatomic, copy) NSDictionary *parameters;
-    @property (nonatomic, copy) NSDictionary *headers;
-    @property (nonatomic) Class<APIResponse> responseClass;
-    
-    @end
-    
-    @implementation SimpleAPIRequest
-    
-    - (instancetype)init
-    {
-        self = [super init];
-        if (self) {
-            self.responseClass = [SimpleAPIResponse class];
-        }
-        return self;
-    }
-    
-    @end
-    
-    @implementation JSONAPIRequest
-    
-    - (instancetype)init
-    {
-        self = [super init];
-        if (self) {
-            self.responseClass = [JSONAPIResponse class];
-            self.headers = @{@"Accept": @"application/json", @"Content-type": @"application/json"};
-        }
-        return self;
-    }
-    
-    @end
 
-    @interface SimpleAPIResponse: NSObject <APIResponse>
-    
-    @end
-    
-    @interface JSONAPIResponse : SimpleAPIResponse
-    
-    @end
-    
-    @interface SimpleAPIResponse ()
-    
-    @property (nonatomic, copy) NSURLSessionDataTask *task;
-    @property (nonatomic, copy) NSHTTPURLResponse *response;
-    @property (nonatomic, copy) NSError *error;
-    @property (nonatomic, strong) id responseObject;
-    @property (nonatomic, strong) id processedResponseObject;
-    
-    @end
-    
-    @implementation SimpleAPIResponse
-    
-    - (instancetype)initWithTask:(NSURLSessionDataTask *)task response:(NSHTTPURLResponse *)response responseObject:(id)responseObject error:(NSError *)error;
-    {
-        self = [super init];
-        if (self) {
-            self.task = task;
-            self.response = response;
-            self.error = error;
-            self.responseObject = responseObject;
-            
-            if (!error) {
-                NSError *serializationError;
-                self.processedResponseObject = [self processResponseObject:&serializationError];
-                if (serializationError) {
-                    self.error = serializationError;
-                }
+```objective-c
+@interface SimpleAPIRequest : NSObject <APIRequest>
+
+@end
+
+@interface JSONAPIRequest : SimpleAPIRequest
+
+@end
+
+@interface SimpleAPIRequest()
+
+@property (nonatomic) HTTPMethod method;
+@property (nonatomic, copy) NSString *path;
+@property (nonatomic, copy) NSDictionary *parameters;
+@property (nonatomic, copy) NSDictionary *headers;
+@property (nonatomic) Class<APIResponse> responseClass;
+
+@end
+
+@implementation SimpleAPIRequest
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self.responseClass = [SimpleAPIResponse class];
+    }
+    return self;
+}
+
+@end
+
+@implementation JSONAPIRequest
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        self.responseClass = [JSONAPIResponse class];
+        self.headers = @{@"Accept": @"application/json", @"Content-type": @"application/json"};
+    }
+    return self;
+}
+
+@end
+
+@interface SimpleAPIResponse: NSObject <APIResponse>
+
+@end
+
+@interface JSONAPIResponse : SimpleAPIResponse
+
+@end
+
+@interface SimpleAPIResponse ()
+
+@property (nonatomic, copy) NSURLSessionDataTask *task;
+@property (nonatomic, copy) NSHTTPURLResponse *response;
+@property (nonatomic, copy) NSError *error;
+@property (nonatomic, strong) id responseObject;
+@property (nonatomic, strong) id processedResponseObject;
+
+@end
+
+@implementation SimpleAPIResponse
+
+- (instancetype)initWithTask:(NSURLSessionDataTask *)task response:(NSHTTPURLResponse *)response responseObject:(id)responseObject error:(NSError *)error;
+{
+    self = [super init];
+    if (self) {
+        self.task = task;
+        self.response = response;
+        self.error = error;
+        self.responseObject = responseObject;
+        
+        if (!error) {
+            NSError *serializationError;
+            self.processedResponseObject = [self processResponseObject:&serializationError];
+            if (serializationError) {
+                self.error = serializationError;
             }
         }
-        return self;
     }
-    
-    - (id)processResponseObject:(NSError *__autoreleasing *)error
-    {
-        return self.responseObject;
+    return self;
+}
+
+- (id)processResponseObject:(NSError *__autoreleasing *)error
+{
+    return self.responseObject;
+}
+
+@end
+
+@implementation JSONAPIResponse
+
+- (id)processResponseObject:(NSError *__autoreleasing *)error
+{
+    if ([self.responseObject isKindOfClass:[NSData class]]) {
+        NSError *serializationError;
+        id processedResponseObject = [NSJSONSerialization JSONObjectWithData:self.responseObject options:0 error:&serializationError];
+        if (error) *error = serializationError;
+        return processedResponseObject;
     }
-    
-    @end
-    
-    @implementation JSONAPIResponse
-    
-    - (id)processResponseObject:(NSError *__autoreleasing *)error
-    {
-        if ([self.responseObject isKindOfClass:[NSData class]]) {
-            NSError *serializationError;
-            id processedResponseObject = [NSJSONSerialization JSONObjectWithData:self.responseObject options:0 error:&serializationError];
-            if (error) *error = serializationError;
-            return processedResponseObject;
-        }
-        else {
-            return nil;
-        }
+    else {
+        return nil;
     }
-    
-    @end
+}
+
+@end
+```
 
 To make requests we need some object. It will make request using `NSURLSessionTask`. Let's define it's protocol.
 
-    typedef void(^APIClientCompletionBlock)(id<APIResponse> response);
-    
-    @protocol APIClient <NSObject>
-    
-    - (NSURLSessionDataTask *)dataTaskWithAPIRequest:(id<APIRequest>)request
-                                          completion:(APIClientCompletionBlock)completion;
-    
-    @end
+```objective-c
+typedef void(^APIClientCompletionBlock)(id<APIResponse> response);
+
+@protocol APIClient <NSObject>
+
+- (NSURLSessionDataTask *)dataTaskWithAPIRequest:(id<APIRequest>)request
+                                        completion:(APIClientCompletionBlock)completion;
+
+@end
+```
 
 Foundation already has class that can create `NSURLSessionTask` - `NSURLSession`. So let's extend it and implement `APIClient` protocol in it's category:
 
-    
-    @interface NSURLSession(APIClient) <APIClient>
-    
-    @end
-    
-    @implementation NSURLSession(APIClient)
-    
-    - (NSURLSessionDataTask *)dataTaskWithAPIRequest:(id<APIRequest>)request
-                                          completion:(APIClientCompletionBlock)completion;
-    {
-        NSURL *requestUrl = [NSURL urlWithString:request.path baseURL:request.baseURL parameters:request.parameters];
-        NSURLRequest *httpRequest = [NSURLRequest requestWithMethod:request.method url:requestUrl headers:request.headers];
-        __block NSURLSessionDataTask *task;
-        task = [self dataTaskWithRequest:httpRequest completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-            
-            Class responseClass = [request responseClass];
-            id<APIResponse> apiResponse = [[responseClass alloc] initWithTask:task response:(NSHTTPURLResponse *)response responseObject:data error:error];
-            
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (completion) { completion(apiResponse); }
-            });
-        }];
-    
-        [task resume];
-        return task;
-    }
-    
-    @end
+```objective-c
+@interface NSURLSession(APIClient) <APIClient>
+
+@end
+
+@implementation NSURLSession(APIClient)
+
+- (NSURLSessionDataTask *)dataTaskWithAPIRequest:(id<APIRequest>)request
+                                        completion:(APIClientCompletionBlock)completion;
+{
+    NSURL *requestUrl = [NSURL urlWithString:request.path baseURL:request.baseURL parameters:request.parameters];
+    NSURLRequest *httpRequest = [NSURLRequest requestWithMethod:request.method url:requestUrl headers:request.headers];
+    __block NSURLSessionDataTask *task;
+    task = [self dataTaskWithRequest:httpRequest completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        
+        Class responseClass = [request responseClass];
+        id<APIResponse> apiResponse = [[responseClass alloc] initWithTask:task response:(NSHTTPURLResponse *)response responseObject:data error:error];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (completion) { completion(apiResponse); }
+        });
+    }];
+
+    [task resume];
+    return task;
+}
+
+@end
+```
 
 This implementation is very generic. In callbacks we can receive instance of `APIResponse` protocol or some specific class that request instance returns from `+responseClass` method. By methods that provide specific type of response we can give clients of our code some type safety.
 
 Now lets look how we can use that. Lets say we have some API that returns GitHub users. Lets define users request and response:
 
-    
-    @interface GitHubJSONRequest : JSONAPIRequest
-    
-    @end
-    
-    @implementation GitHubJSONRequest
-    
-    - (NSURL *)baseURL
-    {
-        return [NSURL URLWithString:@"https://api.github.com"];
+```objective-c    
+@interface GitHubJSONRequest : JSONAPIRequest
+
+@end
+
+@implementation GitHubJSONRequest
+
+- (NSURL *)baseURL
+{
+    return [NSURL URLWithString:@"https://api.github.com"];
+}
+
+@end
+
+
+@interface UsersRequest : GitHubJSONAPIRequest
+
+@end
+
+@implementation UsersRequest
+
+- (HTTPMethod)method
+{
+    return GET;
+}
+
+- (NSString *)path
+{
+    return @"users";
+}
+
+- (Class)responseClass
+{
+    return [UsersResponse class];
+}
+
+@end
+
+
+@interface UsersResponse : JSONAPIResponse
+
+@property (nonatomic, strong, readonly) NSArray *users;
+
+@end
+
+@implementation UsersResponse
+
+- (BOOL)processResponseObject:(NSError **)error;
+{
+    NSError *__error;
+    id processedResponseObject = [super processResponseObject:&__error];
+    if (__error || ![processedResponseObject isKindOfClass:[NSArray class]]) {
+        if (error) *error = __error;
+        return nil;
     }
-    
-    @end
-    
-    
-    @interface UsersRequest : GitHubJSONAPIRequest
-    
-    @end
-    
-    @implementation UsersRequest
-    
-    - (HTTPMethod)method
-    {
-        return GET;
+    else {
+        return [User withArray:processedResponseObject];
     }
-    
-    - (NSString *)path
-    {
-        return @"users";
-    }
-    
-    - (Class)responseClass
-    {
-        return [UsersResponse class];
-    }
-    
-    @end
-    
-    
-    @interface UsersResponse : JSONAPIResponse
-    
-    @property (nonatomic, strong, readonly) NSArray *users;
-    
-    @end
-    
-    @implementation UsersResponse
-    
-    - (BOOL)processResponseObject:(NSError **)error;
-    {
-        NSError *__error;
-        id processedResponseObject = [super processResponseObject:&__error];
-        if (__error || ![processedResponseObject isKindOfClass:[NSArray class]]) {
-            if (error) *error = __error;
-            return nil;
-        }
-        else {
-            return [User withArray:processedResponseObject];
-        }
-    }
-    
-    - (NSArray *)users
-    {
-        return self.processedResponseObject;
-    }
-    
-    @end
+}
+
+- (NSArray *)users
+{
+    return self.processedResponseObject;
+}
+
+@end
+```
 
 Defining shorthand methods to access processed response objects (like `- (NSArray *)users`) will give our clients a straight way to access data they need and provide information about type of this data so they will not need to guess the type and cast it.
 
 What about api client? We don't need to subclass it, we can use it's category to add behavior that we need:
 
-    typedef void(^UsersResponseBlock)(UsersResponse *response);
-    
-    @protocol GitHubClient <APIClient>
-    
-    - (NSURLSessionDataTask *)getUsers:(UsersResponseBlock)completion;
-    
-    @end
-    
-    @interface APIClient (GitHub) <GitHubClient>
-    
-    @end
-    
-    @implementation APIClient (GitHub)
-    
-    - (NSURLSessionDataTask *)getUsers:(UsersResponseBlock)completion;
-    {
-        UsersRequest *request = [[UsersRequest alloc] init];
-        NSURLSessionDataTask *task = [self dataTaskWithAPIRequest:request completion:completion];
-        [task resume];
-        return task;
-    }
-    
-    @end
+```objective-c
+typedef void(^UsersResponseBlock)(UsersResponse *response);
+
+@protocol GitHubClient <APIClient>
+
+- (NSURLSessionDataTask *)getUsers:(UsersResponseBlock)completion;
+
+@end
+
+@interface APIClient (GitHub) <GitHubClient>
+
+@end
+
+@implementation APIClient (GitHub)
+
+- (NSURLSessionDataTask *)getUsers:(UsersResponseBlock)completion;
+{
+    UsersRequest *request = [[UsersRequest alloc] init];
+    NSURLSessionDataTask *task = [self dataTaskWithAPIRequest:request completion:completion];
+    [task resume];
+    return task;
+}
+
+@end
+```
 
 First we create a request. Then we call the method of `APIClient` that actually perform request.  
 Adding `-getUsers:...` method will make a client of our code to be sure about what kind of response it will get - without any typecasting at all.

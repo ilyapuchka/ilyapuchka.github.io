@@ -2,13 +2,13 @@
 id: 5b6f5a3a9d28c70f0f015f6f
 title: Intermediate action segues
 date: 2015-12-27T19:54:38.000Z
-description: ""
+description: "Storyboards segues are very cool. They are very easy yet powerful. They help to incapsulate presentation logic and move it out from view controllers. And adaptive segues are state of the art. There is only one thing (almost) left if view controller..."
 tags: ""
 ---
 
-Storyboards segues are very cool. They are very easy yet powerful. They help to incapsulate presentation logic and move it out from view controllers. And adaptive segues are state of the art. There is only one thing (almost) left if view controller - managing segue performance using those two commonly used methods:
+> TL;DR - You can play with source code and example project [here](https://github.com/ilyapuchka/IntermediateActionSegue).
 
-<!-- description -->
+Storyboards segues are very cool. They are very easy yet powerful. They help to incapsulate presentation logic and move it out from view controllers. And adaptive segues are state of the art. There is only one thing (almost) left if view controller - managing segue performance using those two commonly used methods:
 
 - `func shouldPerformSegueWithIdentifier(identifier: String, sender: AnyObject?) -> Bool`
 - `func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?)`
@@ -20,8 +20,6 @@ There is very common use case. You want to present some view only if user has be
 You can do that with several `if`s if you have it in one place. But what if you have few places in your app where you need to authorize user before doing something?
 
 Lets see how we can do that with custom segue. I will call this segue an `IntermediateActionSegue`.
-
-_TL;DR - You can play with source code and example project [here](https://github.com/ilyapuchka/IntermediateActionSegue)._
 
 Here are our design goals:
 

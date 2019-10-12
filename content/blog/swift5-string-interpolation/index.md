@@ -21,7 +21,7 @@ let name = "iOS Astronauts"
 
 But you'll say, we all already know that and there is nothing really exciting about that. But today let's see how string interpolation works exactly.
 
-For that standard library defines a protocol `ExpressibleByStringInterpolation`. This type was deprecated in Swift 3 so its details are now even stripped out of generated interface of standard library that you'll see in the Xcode, but we can find a cached version on [swiftdoc.org](https://swiftdoc.org/v3.0/protocol/expressiblebystringinterpolation/) <sup><a href="#footnotes">[1]</a></sup>. There you'll see that there are two constructors required by this protocol.
+For that standard library defines a protocol `ExpressibleByStringInterpolation`. This type was deprecated in Swift 3 so its details are now even stripped out of generated interface of standard library that you'll see in the Xcode, but we can find a cached version on swiftdoc.org[^1]. There you'll see that there are two constructors required by this protocol.
 
 ```swift
 protocol ExpressibleByStringInterpolation {
@@ -36,10 +36,10 @@ protocol ExpressibleByStringInterpolation {
 We can also find there some details about how these constructors are being invoked.
 
 > String interpolation is a multiple-step initialization process. When you use string interpolation, the following steps occur:
-
-> 1. The string literal is broken into pieces. Each segment of the string literal **before** , **between** , and **after** any included expressions, along with the individual expressions themselves, are passed to the _**init(stringInterpolationSegment:)**_ initializer.
-
-> 2. The results of those calls are passed to the _**init(stringInterpolation:)**_ initializer in the order in which they appear in the string literal.
+>
+>    _1. The string literal is broken into pieces. Each segment of the string literal **before** , **between** , and **after** any included expressions, along with the individual expressions themselves, are passed to the `init(stringInterpolationSegment:)` initializer._
+>
+>    _2. The results of those calls are passed to the `init(stringInterpolation:)` initializer in the order in which they appear in the string literal._
 
 So essentially string interpolation is just a syntactic sugar that at compile type converts expression like this:
 
@@ -47,7 +47,7 @@ So essentially string interpolation is just a syntactic sugar that at compile ty
 "hello \(name)!"
 ```
 
-into a call like this<sup><a href="#footnotes">[2]</a></sup>:
+into a call like this[^2]:
 
 ```swift
 String(stringInterpolation:
@@ -77,9 +77,9 @@ let html = HTML(blogPost)
 
 Let's see how we can use string interpolation for that.
 
-### Demo 1 ([Interpolation4 playground](https://github.com/ilyapuchka/SwiftStringInterpolation))
+### Demo 1 ([playground](https://github.com/ilyapuchka/SwiftStringInterpolation))
 
-So as you can see it's possible to use string interpolation for that but current design has few limitations (more details in the Swift Evolution proposal<sup><a href="#footnotes">[2]</a></sup>):
+So as you can see it's possible to use string interpolation for that but current design has few limitations (more details in the Swift Evolution proposal[^2]):
 
 1. Doesn't allow extra parameters
 2. Accepts any type of values
@@ -94,7 +94,7 @@ Also the best variant of our implementation that we could achieve is not perfect
 
 But at the same time our implementation is already pretty powerful. We could even workaround some design limitation using free functions to be able to use parameters with interpolation.
 
-Over time people came up with interesting and more useful applications of that, for example for [localization](https://gist.github.com/brentdax/79fa038c0af0cafb52dd) <sup><a href="#footnotes">[3]</a></sup>, which was possible even in Swift 2.
+Over time people came up with interesting and more useful applications of that, for example for [localization](https://gist.github.com/brentdax/79fa038c0af0cafb52dd) [^3], which was possible even in Swift 2.
 
 ```swift
 let color = "blue"
@@ -116,7 +116,7 @@ let localized: LocalizableString =
 
 As we saw earlier `ExpressibleByStringInterpolation` was deprecated in Swift 3 with a promiss to be redesigned in Swift 4. And finally this redesign happened in Swift 5. So let's see what have changed.
 
-The basic concept is still the same, but the form has changed a bit. Now instead of aggregating interpolation segments in the type itself we need to use an associated type that should implement new `StringInterpolationProtocol`. The value of this type will be passsed into the new constructor `init(stringInterpolation:)` instead of array of individual segments. <sup><a href="#footnotes">[2]</a></sup>
+The basic concept is still the same, but the form has changed a bit. Now instead of aggregating interpolation segments in the type itself we need to use an associated type that should implement new `StringInterpolationProtocol`. The value of this type will be passsed into the new constructor `init(stringInterpolation:)` instead of array of individual segments. [^2]
 
 ```swift
 public protocol ExpressibleByStringInterpolation : ExpressibleByStringLiteral {
@@ -127,7 +127,7 @@ public protocol ExpressibleByStringInterpolation : ExpressibleByStringLiteral {
 }
 ```
 
-This associated type needs to implement a new constructor `init(literalCapacity: Int, interpolationCount: Int)` that accepts the combined size of all literal segments and the number of interpolation segments. Then it needs to implement the new `func appendLiteral(_: StringLiteralType)` method that will be called with each string literal segment.And then we can define our own `func appendInterpolation(...)` methods for any other type of segment we want to support. <sup><a href="#footnotes">[2]</a></sup>
+This associated type needs to implement a new constructor `init(literalCapacity: Int, interpolationCount: Int)` that accepts the combined size of all literal segments and the number of interpolation segments. Then it needs to implement the new `func appendLiteral(_: StringLiteralType)` method that will be called with each string literal segment.And then we can define our own `func appendInterpolation(...)` methods for any other type of segment we want to support. [^2]
 
 ```swift
 public protocol StringInterpolationProtocol {
@@ -195,9 +195,9 @@ If we go through the process step by step again then we see that first the inste
 
 Lets see now how our implementation will change with Swift 5.
 
-### Demo 2 ([Interpolation5 playground](https://github.com/ilyapuchka/SwiftStringInterpolation))
+### Demo 2 ([playground](https://github.com/ilyapuchka/SwiftStringInterpolation))
 
-So with this new design we can simplify things we could do before, for example boolean expressions: <sup><a href="#footnotes">[4]</a></sup>
+So with this new design we can simplify things we could do before, for example boolean expressions: [^4]
 
 ```swift
 // old
@@ -207,7 +207,7 @@ So with this new design we can simplify things we could do before, for example b
 "Cheese Sandwich \(if: isStarred, "(*)")"
 ```
 
-Or can even create our own DSLs, like for string formatting<sup><a href="#footnotes">[2]</a></sup> <sup><a href="#footnotes">[5]</a></sup>:
+Or can even create our own DSLs, like for string formatting[^2][^5]:
 
 ```swift
 "The price is $\(cost, format: "%.2f")"
@@ -215,19 +215,19 @@ Or can even create our own DSLs, like for string formatting<sup><a href="#footno
 "\(42, radix: .binary)"
 ```
 
-or attributed strings<sup><a href="#footnotes">[6]</a></sup>:
+or attributed strings[^6]:
 
 ```swift
 "Hello, \("iOS Astronauts", .color(.red))"
 ```
 
-or such special cases as GitHub Msarkdown: <sup><a href="#footnotes">[7]</a></sup>
+or such special cases as GitHub Msarkdown: [^7]
 
 ```swift
 "See \(issue: 123)"
 ```
 
-We can even go a bit further and implemt our own template DSL: <sup><a href="#footnotes">[8]</a></sup>
+We can even go a bit further and implemt our own template DSL: [^8]
 
 ```swift
 let hello: Template = """
@@ -240,7 +240,7 @@ let hello: Template = """
     """
 ```
 
-Or a more type-safe version of string format: <sup><a href="#footnotes">[8]</a></sup>
+Or a more type-safe version of string format: [^8]
 
 ```swift
 let hello: StringFormatter<(String, Date)> = "Hello, \(.string). Today is \(.date)."
@@ -253,7 +253,7 @@ Some of these things will surely make it into the standard library and many 3rd 
 
 ### One more thing
 
-There is also one small but very useful improvement in Swift 5 not directly related to string interpolation, but one that makes it even easier to use. Now you can use `#` to tell Swift that quotes and back slashes in your string are actually literals. With that when you want to use string interpolation you need to add the same number of `#` . With this you no longer need to use `\` to escape characters, which is a big deal when dealing for example with regular expressions <sup><a href="#footnotes">[9]</a></sup>
+There is also one small but very useful improvement in Swift 5 not directly related to string interpolation, but one that makes it even easier to use. Now you can use `#` to tell Swift that quotes and back slashes in your string are actually literals. With that when you want to use string interpolation you need to add the same number of `#` . With this you no longer need to use `\` to escape characters, which is a big deal when dealing for example with regular expressions [^9]
 
 ```swift
 // old
@@ -264,13 +264,13 @@ print(#"<a href="\#(url)" title="Apple Developer">"#)
 ```
 
 
-1. [https://swiftdoc.org/v3.0/protocol/expressiblebystringinterpolation/](https://swiftdoc.org/v3.0/protocol/expressiblebystringinterpolation/)
-2. [https://github.com/apple/swift-evolution/blob/master/proposals/0228-fix-expressiblebystringinterpolation.md](https://github.com/apple/swift-evolution/blob/master/proposals/0228-fix-expressiblebystringinterpolation.md) 
-3. [https://gist.github.com/brentdax/79fa038c0af0cafb52dd](https://gist.github.com/brentdax/79fa038c0af0cafb52dd)
-4. [https://ericasadun.com/2018/12/12/the-beauty-of-swift-5-string-interpolation/](https://ericasadun.com/2018/12/12/the-beauty-of-swift-5-string-interpolation/)
-5. [https://ericasadun.com/2018/12/14/more-fun-with-swift-5-string-interpolation-radix-formatting/](https://ericasadun.com/2018/12/14/more-fun-with-swift-5-string-interpolation-radix-formatting/) 
-6. [http://alisoftware.github.io/swift/2018/12/16/swift5-stringinterpolation-part2/](http://alisoftware.github.io/swift/2018/12/16/swift5-stringinterpolation-part2/) 
-7. [http://alisoftware.github.io/swift/2018/12/15/swift5-stringinterpolation-part1/](http://alisoftware.github.io/swift/2018/12/15/swift5-stringinterpolation-part1/) 
-8. [https://github.com/ilyapuchka/Interplate](https://github.com/ilyapuchka/Interplate) 
-9. [https://github.com/apple/swift-evolution/blob/master/proposals/0200-raw-string-escaping.md](https://github.com/apple/swift-evolution/blob/master/proposals/0200-raw-string-escaping.md)
+[^1]: [https://swiftdoc.org/v3.0/protocol/expressiblebystringinterpolation/](https://swiftdoc.org/v3.0/protocol/expressiblebystringinterpolation/)
+[^2]: [https://github.com/apple/swift-evolution/blob/master/proposals/0228-fix-expressiblebystringinterpolation.md](https://github.com/apple/swift-evolution/blob/master/proposals/0228-fix-expressiblebystringinterpolation.md) 
+[^3]: [https://gist.github.com/brentdax/79fa038c0af0cafb52dd](https://gist.github.com/brentdax/79fa038c0af0cafb52dd)
+[^4]: [https://ericasadun.com/2018/12/12/the-beauty-of-swift-5-string-interpolation/](https://ericasadun.com/2018/12/12/the-beauty-of-swift-5-string-interpolation/)
+[^5]: [https://ericasadun.com/2018/12/14/more-fun-with-swift-5-string-interpolation-radix-formatting/](https://ericasadun.com/2018/12/14/more-fun-with-swift-5-string-interpolation-radix-formatting/) 
+[^6]: [http://alisoftware.github.io/swift/2018/12/16/swift5-stringinterpolation-part2/](http://alisoftware.github.io/swift/2018/12/16/swift5-stringinterpolation-part2/) 
+[^7]: [http://alisoftware.github.io/swift/2018/12/15/swift5-stringinterpolation-part1/](http://alisoftware.github.io/swift/2018/12/15/swift5-stringinterpolation-part1/) 
+[^8]: [https://github.com/ilyapuchka/Interplate](https://github.com/ilyapuchka/Interplate) 
+[^9]: [https://github.com/apple/swift-evolution/blob/master/proposals/0200-raw-string-escaping.md](https://github.com/apple/swift-evolution/blob/master/proposals/0200-raw-string-escaping.md)
 

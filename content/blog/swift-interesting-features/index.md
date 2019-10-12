@@ -3,7 +3,7 @@ id: 5b6f5a3a9d28c70f0f015f61
 title: Swift interesting features
 date: 2015-04-19T12:05:41.000Z
 description: ""
-tags: ""
+tags: Swift
 ---
 
 or What Swift Language Guide do not tell you.
@@ -20,7 +20,7 @@ Contents:
 4. Curried functions
 5. Subscript with more than one parameter (by [AirspeedVelocity](https://twitter.com/AirspeedSwift/status/626701244455895044))
 
-###### Var in for-in loop
+#### Var in for-in loop
 
 If you have an array of reference type objects you can mutate them in a loop just by adding `var` before loop variable. This will work only for reference types as value types are copied on assignment and so the items in array will be not modified. If you have value types though you will be able to modify loop variable inside the loop. It will work pretty much like mutable function arguments.
     
@@ -47,7 +47,7 @@ If you have an array of reference type objects you can mutate them in a loop jus
     objectsArray // 2, 3, 4
 ``` 
   
-######Property observers for local variables 
+####Property observers for local variables 
 
 This does not work in plyagrounds but give it a try in a real project and you will see "Will set 1" and "Did set 1":
 
@@ -68,7 +68,7 @@ This does not work in plyagrounds but give it a try in a real project and you wi
     method()
 ```
   
-###### `~=` operator 
+#### `~=` operator 
 
 This is an expression matching operator. This is what `switch` statement uses for pattern matching. Outside `switch` you can use it i.e to find out if Range contains value. 
 
@@ -152,7 +152,7 @@ Unfortunatelly complier will not let you to match your class against tuple or en
     }
 ```
   
-######Curried functions 
+####Curried functions 
 
 Instance methods in Swift are actually curried functions. You can store it in variable and apply to different instances. Checkout [this post](http://oleb.net/blog/2014/07/swift-instance-methods-curried-functions/) by Ole Begemann for one of use cases for that feature.
 
@@ -170,7 +170,7 @@ Instance methods in Swift are actually curried functions. You can store it in va
     growOlder(Marina)(5)
 ```
   
-######Subscript with multiple parameters (by [AirspeedVelocity](https://twitter.com/AirspeedSwift/status/626701244455895044)) 
+####Subscript with multiple parameters (by [AirspeedVelocity](https://twitter.com/AirspeedSwift/status/626701244455895044)) 
 
 Did you know that you can provide more than one parameter to subscript? Also ++ will not just change returned value but will also write it back to that subscript. It's possible because subscript parameters are `inout`.
 

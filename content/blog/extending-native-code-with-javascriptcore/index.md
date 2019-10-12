@@ -16,11 +16,11 @@ As every technology JavaScriptCore has its pros and cons. On one side it's fairl
 
 There is a good documentation and there are bunch of articles talking describing basics of JavaScriptCore which are really very simple so I will not repeat them here. If you want you can see all the implementation details in [this repo](https://github.com/ilyapuchka/StencilJS). Instead I'd like to provide some tips that I've discovered while digging into it.
 
-##### Modularity
+#### Modularity
 
 For interoperability with your native code JavaScriptCore requires conformance to a protocol that defines all methods and properties that you want to access from JavaScript. It must inherit `JSExport` protocol and must be marked with `@objc` which inherently means that only subclasses of `NSObject` can implement it. But you don't need to sacrifice your swifty design choices in favour of supporting JavaScriptCore. Using adapter classes is a straightforward solution which gives enough flexibility for the price of writing some boilerplate. You can even define them in a separate module (framework) keeping your core module free of any references to JavaScriptCore.
 
-##### Exceptions
+#### Exceptions
 
 Catch all JavaScript exceptions and rethrow them as native errors. Basically that's the only way to debug JavaScript code. Rethrowing JavaScript exceptions as native errors will help you to integrate it with native code and provide users feedback in case something is wrong in their JavaScript code. It's very easy to do with a simple helper method:
 
@@ -56,7 +56,7 @@ let console = jscontext.objectForKeyedSubscript("console")
 console?.setObject(unsafeBitCast(consoleLog, to: AnyObject.self), forKeyedSubscript: "log" as NSString)
 ```
 
-##### Result
+#### Result
 
 It's not possible (as far as I can tell) to use methods which `throws` even though they are bridged to Objective-C from Swift. Changing method to non-throwing and using `try!` could be one of your options, but there are other solutions - you can provide a function as a parameter and pass it an error (see the next tip), or you can use `Result`-like wrapper type (especially if you are already using `Result` in your native code).
 
@@ -79,7 +79,7 @@ func wrapperMethodCalledFromJavaScript() -> Any? {
 
 This way you can effectively rethrow native errors through JavaScript back to native code that invoked it or handle them in JavaScript code itself.
 
-##### Closure parameters
+#### Closure parameters
 
 You can not export methods with closure parameters. Instead of closure type use `JSValue` and `call(withArguments:)` when in native code you need to call a JavaScript function passed as a parameter. This way you can for example implement alternative API for handling errors (on JavaScript side you can pass `{}` if you don't need error handling)
 
@@ -96,7 +96,7 @@ func wrapperMethodCalledFromJavaScript(_ onError: JSValue) -> Any? {
 wrapperMethodCalledFromJavaScript(function(error) { ... })
 ```
 
-##### Constructors
+#### Constructors
 
 To be able to construct your exported native types in JavaScript you can define a static factory method in a protocol. Swift initialisers are not automatically exported by JavaScriptCore. To use them you can do some trick - cast your initializer to `@convention(block)` closure and register it in a JavaScript context with a type name as a key:
 
@@ -113,7 +113,7 @@ var variable = new Variable("name")
 
 With that you will not be able to access static methods of this type, but it may be still better than defining unneeded factory methods.
 
-##### Key-Value coding
+#### Key-Value coding
 
 If you try to access property that is not present in the object you will get a nice `undefined` result of you script without any info what actually went wrong. In Cocoa in contrast to that we have Key-Value Coding which let us not only define `valueForKey` but also `valueForUndefinedKey`. Those methods are not available in JavaScript context (unless you define them in export protocol of course) and even if they would they will be not that convenient to use comparing with dot notation. There is a way to combine two approaches - using [Proxy](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Proxy). It let's you define i.e. getter or setter decorators which will be called every time you try to access any property on a proxy object. This is what we use in [Sourcery](https://github.com/krzysztofzablocki/Sourcery/blob/master/Sourcery/Generating/Template/JavaScript/JavaScriptTemplate.swift#L46) to catch some runtime errors in JavaScript templates.
 
@@ -128,7 +128,7 @@ jsContext.evaluateScript("myObject = new Proxy(myObject, { get: valueForKey })")
 
 This way we replace original object with `Proxy` that wraps it and every time any property will be accessed on this proxy the `valueForKey` block will be called where we can redirect to `NSObject`'s `value(forKey:)` or do what ever else.
 
-##### Playgrounds
+#### Playgrounds
 
 In a playground define types that you want to export in a separate source file, not directly in a playground page. Only this way they will be exported.
 

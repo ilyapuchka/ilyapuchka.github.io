@@ -28,11 +28,11 @@ enum Routes {
 
 - route can have typed parameters extracted from path components or from query. For routes defined above we can imaging following patterns:
 
-/users/me
-/users/:string/profile
-/users/:string/follow
-/retweet?tweetId=:int
-/users/:string/tweets/:int
+`/users/me`<br/>
+`/users/:string/profile`<br/>
+`/users/:string/follow`<br/>
+`/retweet?tweetId=:int`<br/>
+`/users/:string/tweets/:int`<br/>
 
 Here `:string` or `:int` stands for parameter of `String` or `Int` type. As you can see they can be defined as part of the path or query. When several parameters are defined they should strictly match types and order of associated values in the route case. This way complier will only allow us to associate routes with patterns when their parameter types match.
 

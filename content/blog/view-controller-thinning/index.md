@@ -21,7 +21,8 @@ We will build very simple single view application which will display authorizati
 #### Specification
 
 Application should display two input fields - for email and password - and two buttons - to login and to restoring password. If login fails the alert with error message should be displayed. If login or password are invalid then corresponding input fields should be marked with red dot at their right side and should be animated with "shake" animation. When user selects input field its background color should change to slightly lighter color with animation. When user deselects input filed its background color should animate back to initial color. Same effect should be applied to login button when user touches it or removes his finger from it. It should look something like this:  
-![gif](/content/images/2015/09/PyTEKxWkVk.gif)
+
+![gif](/images/PyTEKxWkVk.gif)
 
 #### Initial state
 
@@ -121,13 +122,13 @@ With Swift animations can be simplified even more. Default `animationWithDiratio
 
 ```swift
 extension UIView {
-class func animateWithDuration(duration: NSTimeInterval = 0, delay: NSTimeInterval = 0, options: UIViewAnimationOptions = [], animations: () -> Void) {
-    animateWithDuration(duration, delay: delay, options: options, animations: animations, completion: nil)
-}
+    class func animateWithDuration(duration: NSTimeInterval = 0, delay: NSTimeInterval = 0, options: UIViewAnimationOptions = [], animations: () -> Void) {
+        animateWithDuration(duration, delay: delay, options: options, animations: animations, completion: nil)
+    }
 
-func changeAnimated(animated: Bool, delay: NSTimeInterval = 0, options: UIViewAnimationOptions = [], changes: () -> Void, completion: ((Bool) -> Void)? = nil) {
-    UIView.animateWithDuration(animated ? implicitAnimationDuration : 0, delay: delay, options: options, animations: changes, completion: completion)
-}
+    func changeAnimated(animated: Bool, delay: NSTimeInterval = 0, options: UIViewAnimationOptions = [], changes: () -> Void, completion: ((Bool) -> Void)? = nil) {
+        UIView.animateWithDuration(animated ? implicitAnimationDuration : 0, delay: delay, options: options, animations: changes, completion: completion)
+    }
 }
 ```
 
@@ -495,5 +496,7 @@ class ViewController: UIViewController {
 ```
 
 Have you noticed how many stuff already we have moved away from view controller? Now it manages only some of view setup and business logic. Most of presentation logic have moved to view itself. And I'm sure this is the right place for it. Even if you have complex view with lot's of stuff that should change on different events coming from different parts of your app, like for example constraints, they should not be changed or accessed by view controller directly. There should be API for that provided by UIView subclass. It is commonly said that view controllers are hard to test cause of their complex lifecycle. Views have much more simple lifecycle so they are better candidates for testing and handling presentation logic. Stay tuned and check out next parts of this series.
+
+----
 
 1. Unfortunately it looks like you can't use `UI_APPEARANCE_SELECTOR` together with `IBInspectable` which will be ignored for properties marked with `UI_APPEARANCE_SELECTOR`. That means that you can setup views properties either with UIAppearance proxy or with Interface Builder, not with both at the same time.↩︎

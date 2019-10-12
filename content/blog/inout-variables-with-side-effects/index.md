@@ -2,13 +2,12 @@
 id: 5b6f5a3a9d28c70f0f015f7e
 title: Inout variables with side effects
 date: 2016-12-15T13:12:17.000Z
-description: ""
+description: "Every app has some kind of caching. Let's say our caching strategy is very simple: check if data is in the memory cache and return it, if not - make a network call and cache the result when it's done. For that you can write code that will probably look something like this...
+"
 tags: ""
 ---
 
 Every app has some kind of caching. Let's say our caching strategy is very simple:
-
-<!-- description -->
 
 - check if data is in the memory cache and return it
 - if not - make a network call and cache the result when it's done

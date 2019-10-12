@@ -14,7 +14,9 @@ In general there is nothing special in the setup and it works both in Xcode 7 an
 
 First you need to specify that the framework target supports all the platforms, not forgetting about simulators. If you already have separate framework targets, like I had, you can notice that, for instance tvOS target supports `appletvos` and `appletvsimulator` (just try to change `tvOS` in **Supported Platforms** build setting to `Others...` and you will see the list). So we just need to combine all these values in one single target. At the end you will have the following list of platforms:
 
-    SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator"
+```
+SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator"
+```
 
 Next you need to set deployment target for each of these platforms in Deployment section of build settings.
 
@@ -22,7 +24,7 @@ The next step is to make sure that in **TARGETED\_DEVICE\_FAMILY** setting in Us
 
 Then you in run destinations list you will see all different devices grouped by platforms:
 
-![](/content/images/2016/08/multiplatform.png)
+![](/images/multiplatform.png)
 
 Now you will be able to build your framework for different platforms simply by selecting corresponding device as a destination.
 
@@ -33,7 +35,7 @@ Test targets are a bit different. The same way you can use a single test target 
     LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks @loader_path/Frameworks";
     "LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks @loader_path/../Frameworks";
 
-![](/content/images/2016/08/rpath.png)
+![](/images/rpath.png)
 
 Then you will be able to run your tests on different platforms using just one target (if you are not that lucky just like me you will need to clean your project and restart Xcode several times before it will really work).
 
@@ -47,40 +49,46 @@ If you are working on an open-source framework then probably you support Carthag
 
 There are few gotchas that I have found along the way. First happens when your cross-platform framework depends on another framework and you manage this dependency with Carthage. To sole it you need to modify **Framework Search Paths** build setting to point to specific Carthage subfolder (don't forget about simulators):
 
-    "FRAMEWORK_SEARCH_PATHS[sdk=appletvos*]" = "$(SRCROOT)/Carthage/Build/tvOS";
-    "FRAMEWORK_SEARCH_PATHS[sdk=appletvsimulator*]" = "$(SRCROOT)/Carthage/Build/tvOS";
-    "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = "$(SRCROOT)/Carthage/Build/iOS";
-    "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]" = "$(SRCROOT)/Carthage/Build/iOS";
-    "FRAMEWORK_SEARCH_PATHS[sdk=macosx*]" = "$(SRCROOT)/Carthage/Build/Mac";
+```
+"FRAMEWORK_SEARCH_PATHS[sdk=appletvos*]" = "$(SRCROOT)/Carthage/Build/tvOS";
+"FRAMEWORK_SEARCH_PATHS[sdk=appletvsimulator*]" = "$(SRCROOT)/Carthage/Build/tvOS";
+"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = "$(SRCROOT)/Carthage/Build/iOS";
+"FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]" = "$(SRCROOT)/Carthage/Build/iOS";
+"FRAMEWORK_SEARCH_PATHS[sdk=macosx*]" = "$(SRCROOT)/Carthage/Build/Mac";
+```
 
 Then you will need to modify copy frameworks build step in your test target. You can copy required frameworks manually or use Carthage's `copy-framework` tool.
 
 When using `copy-framework` we must provide input files (paths to frameworks to copy) using Input Files list. But that in fact will be equivalent to defining `SCRIPT_INPUT_FILE_COUNT` and `SCRIPT_INPUT_FILE_n` environment variables. So here is a script I wrote for that:
 
-    for path in $FRAMEWORK_SEARCH_PATHS
-    do
-        if [-d "${path}/Dip.framework"] && [[$path == *"Carthage"*]]; then
-            export SCRIPT_INPUT_FILE_COUNT=1
-            export SCRIPT_INPUT_FILE_0="${path}/Dip.framework"
-            /usr/local/bin/carthage copy-frameworks
-            break
-        fi
-    done
+```
+for path in $FRAMEWORK_SEARCH_PATHS
+do
+    if [-d "${path}/Dip.framework"] && [[$path == *"Carthage"*]]; then
+        export SCRIPT_INPUT_FILE_COUNT=1
+        export SCRIPT_INPUT_FILE_0="${path}/Dip.framework"
+        /usr/local/bin/carthage copy-frameworks
+        break
+    fi
+done
+```
 
 Here I search for the dependency framework in `$FRAMEWORK_SEARCH_PATHS` located in a Carthage build folder and then define environment variables required for `copy-frameworks`
 
 The next problem happens if your target contains arbitrary resource files (for instance Interface Builder files) that differ from platform to platform. It will also require a Run Script build phase. In [Dip-UI](https://github.com/AliSoftware/Dip-UI) I have to test how framework integrates with storyboards. Thus I need to use storyboards in test target. But not only storyboards are implemented by different classes on iOS and macOS (`UIStoryboard` and `NSStoryboard`), but they also require different storyboard files. Storyboards have to be not just copied as other resources, but also compiled. There is no way to make Xcode compile storyboards conditionally depending on a platform other than doing it with a script. Here is a script I ended up with:
 
-    ibtool --compilation-directory "${TARGET_TEMP_DIR}" "${SRCROOT}/DipUITests/${STORYBOARD_NAME_PREFIX}Storyboard.storyboard"
-    ibtool --link "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}" "${TARGET_TEMP_DIR}/${STORYBOARD_NAME_PREFIX}Storyboard.storyboardc"
+```
+ibtool --compilation-directory "${TARGET_TEMP_DIR}" "${SRCROOT}/DipUITests/${STORYBOARD_NAME_PREFIX}Storyboard.storyboard"
+ibtool --link "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}" "${TARGET_TEMP_DIR}/${STORYBOARD_NAME_PREFIX}Storyboard.storyboardc"
+```
 
 There are two steps - compiling storyboard and linking, which copies compiled storyboard to resources folder.  
 To come up with correct commands I simply inspected Xcode logs when it was building platform-specific test targets and removed unneeded command line arguments. It works for me as I use very simple storyboards but you may need to provide some additional parameters.
 
-> _Note:_
-
-> _1. `STORYBOARD_NAME_PREFIX` defines different prefix for storyboard files for different platforms._
-
+> _Notes:_
+>
+> _1. `STORYBOARD_\_NAME__PREFIX` defines different prefix for storyboard files for different platforms._
+>
 > _2. You will probably need to go to storyboards and check if your view controllers have correct `Module` in Identity Inspector._
 
 Surprisingly when I had separate framework targets for tvOS and iOS I could use the same iOS storyboard both in iOS test target and in tvOS test target. This didn't work when I switched to a single framework target. So I also had to create a new storyboard specifically for tvOS.
