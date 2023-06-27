@@ -9,18 +9,31 @@
  */
 module.exports = {
   siteMetadata: {
-    title: `Gatsby Starter Blog`,
+    title: `Ilya Puchka`,
     author: {
-      name: `Kyle Mathews`,
-      summary: `who lives and works in San Francisco building useful things.`,
+      name: `Ilya Puchka`,
+      summary: `iOS developer at Wise`,
     },
-    description: `A starter blog demonstrating what Gatsby can do.`,
-    siteUrl: `https://gatsbystarterblogsource.gatsbyjs.io/`,
+    description: `Ilya Puchka Blog`,
+    siteUrl: `https://ilya.puchka.me`,
     social: {
-      twitter: `kylemathews`,
+      twitter: `ilyapuchka`,
+      github: `ilyapuchka`
     },
   },
   plugins: [
+    {
+      resolve: `gatsby-plugin-disqus`,
+        options: {
+          shortname: `ilyapuchkameen`
+      }
+    },
+    {
+      resolve: `gatsby-plugin-google-analytics`,
+        options: {
+          trackingId: `UA-57638998-1`,
+        },
+      },
     `gatsby-plugin-image`,
     {
       resolve: `gatsby-source-filesystem`,
@@ -43,16 +56,23 @@ module.exports = {
           {
             resolve: `gatsby-remark-images`,
             options: {
-              maxWidth: 630,
+              linkImagesToOriginal: true,
+              maxWidth: 590,
             },
           },
+          'gatsby-remark-numbered-footnotes',
           {
             resolve: `gatsby-remark-responsive-iframe`,
             options: {
               wrapperStyle: `margin-bottom: 1.0725rem`,
             },
           },
-          `gatsby-remark-prismjs`,
+          {
+            resolve: `gatsby-remark-prismjs`,
+            options: {
+              noInlineHighlight: true,
+            }
+          },
         ],
       },
     },
@@ -110,8 +130,8 @@ module.exports = {
     {
       resolve: `gatsby-plugin-manifest`,
       options: {
-        name: `Gatsby Starter Blog`,
-        short_name: `Gatsby`,
+        name: `Ilya Puchka Blog`,
+        short_name: `ilya.puchka.me`,
         start_url: `/`,
         background_color: `#ffffff`,
         // This will impact how browsers show your PWA/website

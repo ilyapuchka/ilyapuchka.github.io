@@ -4,12 +4,22 @@ import { Link, graphql } from "gatsby"
 import Bio from "../components/bio"
 import Layout from "../components/layout"
 import Seo from "../components/seo"
+import Disqus from "gatsby-plugin-disqus"
 
 const BlogPostTemplate = ({
   data: { previous, next, site, markdownRemark: post },
   location,
 }) => {
-  const siteTitle = site.siteMetadata?.title || `Title`
+  //const siteTitle = site.siteMetadata?.title || `Title`
+  const siteTitle = `All posts`
+  const siteUrl = site.siteMetadata.siteUrl
+  const postId = post.frontmatter.id || post.id
+  const tags = post.frontmatter.tags ? post.frontmatter.tags + " | " : ""
+  const disqusConfig = {
+      url: `${siteUrl}${post.fields.slug}`,
+      identifier: postId,
+      title: post.title,
+  }
 
   return (
     <Layout location={location} title={siteTitle}>
@@ -20,7 +30,7 @@ const BlogPostTemplate = ({
       >
         <header>
           <h1 itemProp="headline">{post.frontmatter.title}</h1>
-          <p>{post.frontmatter.date}</p>
+          <p>{tags}{post.frontmatter.date}</p>
         </header>
         <section
           dangerouslySetInnerHTML={{ __html: post.html }}
@@ -31,32 +41,50 @@ const BlogPostTemplate = ({
           <Bio />
         </footer>
       </article>
-      <nav className="blog-post-nav">
-        <ul
-          style={{
-            display: `flex`,
-            flexWrap: `wrap`,
-            justifyContent: `space-between`,
-            listStyle: `none`,
-            padding: 0,
-          }}
-        >
-          <li>
-            {previous && (
-              <Link to={previous.fields.slug} rel="prev">
-                ← {previous.frontmatter.title}
+      <section
+        style={{
+          display: `flex`,
+          flexWrap: `wrap`,
+          flexDirection: `row`,
+          justifyContent: `space-between`,
+          listStyle: `none`,
+          padding: 0,
+        }}
+      >
+        <section style={{maxWidth: `50%`, padding: 10}}>
+        {previous && (
+            <div>
+              Previous:<br/>
+              <Link style={{ boxShadow: `none`, color:'#000' }} to={previous.fields.slug} rel="prev">
+                <strong>{previous.frontmatter.title}</strong>
               </Link>
-            )}
-          </li>
-          <li>
-            {next && (
-              <Link to={next.fields.slug} rel="next">
-                {next.frontmatter.title} →
+              <p>{previous.frontmatter.date}</p>
+              <p
+                dangerouslySetInnerHTML={{
+                  __html: previous.excerpt,
+                }}
+              />
+            </div>
+          )}
+        </section>
+        <section style={{maxWidth: `50%`, padding: 10}}>
+          {next && (
+            <div>
+              Next:<br/>
+              <Link style={{ boxShadow: `none`, color:'#000' }} to={next.fields.slug} rel="next">
+                <strong>{next.frontmatter.title}</strong>
               </Link>
-            )}
-          </li>
-        </ul>
-      </nav>
+              <p>{next.frontmatter.date}</p>
+              <p
+                dangerouslySetInnerHTML={{
+                  __html: next.excerpt,
+                }}
+              />
+            </div>
+        )}
+        </section>
+      </section>
+      <Disqus config={disqusConfig} />
     </Layout>
   )
 }
@@ -81,32 +109,42 @@ export const pageQuery = graphql`
     site {
       siteMetadata {
         title
+        siteUrl
       }
     }
     markdownRemark(id: { eq: $id }) {
       id
       excerpt(pruneLength: 160)
       html
+      fields {
+        slug
+      }
       frontmatter {
+        id
         title
         date(formatString: "MMMM DD, YYYY")
         description
+        tags
       }
     }
     previous: markdownRemark(id: { eq: $previousPostId }) {
+      excerpt(pruneLength: 160)
       fields {
         slug
       }
       frontmatter {
         title
+        date(formatString: "MMMM DD, YYYY")
       }
     }
     next: markdownRemark(id: { eq: $nextPostId }) {
+      excerpt(pruneLength: 160)
       fields {
         slug
       }
       frontmatter {
         title
+        date(formatString: "MMMM DD, YYYY")
       }
     }
   }
