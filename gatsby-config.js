@@ -22,6 +22,18 @@ module.exports = {
     },
   },
   plugins: [
+    {
+      resolve: `gatsby-plugin-disqus`,
+        options: {
+          shortname: `ilyapuchkameen`
+      }
+    },
+    {
+      resolve: `gatsby-plugin-google-analytics`,
+        options: {
+          trackingId: `UA-57638998-1`,
+        },
+      },
     `gatsby-plugin-image`,
     {
       resolve: `gatsby-source-filesystem`,
@@ -44,16 +56,23 @@ module.exports = {
           {
             resolve: `gatsby-remark-images`,
             options: {
-              maxWidth: 630,
+              linkImagesToOriginal: true,
+              maxWidth: 590,
             },
           },
+          'gatsby-remark-numbered-footnotes',
           {
             resolve: `gatsby-remark-responsive-iframe`,
             options: {
               wrapperStyle: `margin-bottom: 1.0725rem`,
             },
           },
-          `gatsby-remark-prismjs`,
+          {
+            resolve: `gatsby-remark-prismjs`,
+            options: {
+              noInlineHighlight: true,
+            }
+          },
         ],
       },
     },
