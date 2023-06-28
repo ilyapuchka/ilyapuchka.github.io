@@ -290,6 +290,11 @@ a:focus {
   margin-bottom: var(--spacing-0);
 }
 
+.gatsby-image-wrapper {
+   position: relative;
+   z-index: 0;
+}
+
 .bio-avatar {
   margin-right: var(--spacing-4);
   margin-bottom: var(--spacing-0);
